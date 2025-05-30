@@ -191,10 +191,78 @@ def prompt_select_country(data_transformada_indicadores):
         except ValueError:
             print("Error: Entrada inválida. Ingresa solo un número. Intenta de nuevo.")
 
+def consolidate_data_for_country(data_transformada_indicadores, country_to_analyze, selected_sheet_names):
+    """
+    Consolida los datos de múltiples indicadores para un país específico en un solo DataFrame.
+
+    Args:
+        data_transformada_indicadores (dict): Diccionario donde las claves son nombres de indicadores
+                                              y los valores son DataFrames con Años como índice
+                                              y Países como columnas.
+        country_to_analyze (str): El nombre del país seleccionado.
+        selected_sheet_names (list): Lista de los nombres de las hojas/indicadores seleccionados,
+                                     para mantener el orden de las columnas y los nombres.
+    Returns:
+        pd.DataFrame: Un DataFrame con Años como índice y los indicadores seleccionados como columnas
+                      para el país especificado. Devuelve un DataFrame vacío si hay error.
+    """
+    if not data_transformada_indicadores:
+        print("No hay datos transformados de indicadores para consolidar.")
+        return pd.DataFrame()
+    if not country_to_analyze:
+        print("No se especificó un país para la consolidación.")
+        return pd.DataFrame()
+    if not selected_sheet_names:
+        print("No se especificaron nombres de hojas/indicadores para la consolidación.")
+        return pd.DataFrame()
+
+    print(f"\n--- Consolidando datos para el país: {country_to_analyze} ---")
+    
+    lista_series_del_pais = []
+
+    for nombre_indicador in selected_sheet_names:
+        if nombre_indicador in data_transformada_indicadores:
+            df_indicador_actual = data_transformada_indicadores[nombre_indicador]
+            
+            if df_indicador_actual is None or df_indicador_actual.empty:
+                print(f"  Advertencia: El DataFrame transformado para el indicador '{nombre_indicador}' está vacío o es None. Se omitirá.")
+                continue # Saltar al siguiente indicador
+
+            if country_to_analyze in df_indicador_actual.columns:
+                # Seleccionar la serie de datos para el país
+                serie_pais_indicador = df_indicador_actual[country_to_analyze].copy()
+                # Renombrar la Serie para que su nombre sea el del indicador (nombre de la hoja)
+                # Esto será el nombre de la columna en el DataFrame final
+                serie_pais_indicador.name = nombre_indicador 
+                lista_series_del_pais.append(serie_pais_indicador)
+                print(f"  Datos del indicador '{nombre_indicador}' para '{country_to_analyze}' añadidos.")
+            else:
+                print(f"  Advertencia: El país '{country_to_analyze}' no se encontró como columna en el indicador transformado '{nombre_indicador}'. Se omitirá.")
+        else:
+            print(f"  Advertencia: El indicador '{nombre_indicador}' no se encontró en los datos transformados. Se omitirá.")
+
+    if not lista_series_del_pais:
+        print(f"No se pudieron obtener datos para ningún indicador para el país '{country_to_analyze}'.")
+        return pd.DataFrame()
+
+    # Concatenar todas las Series en un solo DataFrame.
+    # Cada Serie se convertirá en una columna. El índice (Año) se alineará automáticamente.
+    try:
+        df_consolidado_final = pd.concat(lista_series_del_pais, axis=1)
+        print(f"\n--- Datos Consolidados para {country_to_analyze} (listos para ACP) ---")
+        # print(df_consolidado_final.head()) # main.py se encargará de imprimir el head
+        # df_consolidado_final.info()
+        return df_consolidado_final
+    except Exception as e_concat:
+        print(f"Error al concatenar las series de datos para el país '{country_to_analyze}': {e_concat}")
+        import traceback
+        traceback.print_exc()
+        return pd.DataFrame()
+
 # --- Bloque de prueba ---
 if __name__ == '__main__':
     print("--- Ejecutando pruebas para data_loader_module.py ---")
-    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\SOCIOECONOMICOS_V1.xlsx"
+    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\SOCIOECONOMICOS_V2.xlsx"
     
     # Llama directamente a las funciones definidas arriba en el módulo
     all_data_v1 = load_excel_file(test_file_path_v1)
