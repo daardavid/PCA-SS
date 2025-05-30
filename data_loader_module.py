@@ -1,0 +1,222 @@
+import pandas as pd
+import numpy as np # Necesario para transformar_df_indicador_v1
+import traceback   # Importación única al principio
+
+def load_excel_file(file_path):
+    # PRINT DE DEPURACIÓN INMEDIATO AL ENTRAR A LA FUNCIÓN
+    print(f"DEBUG MODULE: Función load_excel_file llamada con ruta: {file_path}")
+    print(f"DEBUG MODULE: Tipo de file_path: {type(file_path)}")
+    
+    try:
+        print(f"DEBUG MODULE: Intentando pd.ExcelFile() con: {file_path}")
+        # Bloque try-except para la apertura inicial del archivo y obtención de nombres de hojas
+        try:
+            excel_data = pd.ExcelFile(file_path)
+            sheet_names = excel_data.sheet_names
+            print(f"\n--- MODULE Cargando hojas del archivo: {file_path} ---")
+            print(f"DEBUG MODULE: Hojas encontradas en el archivo: {sheet_names}")
+        except Exception as e_open: # Error específico al abrir o leer nombres de hojas
+            print(f"MODULE Error al intentar abrir el archivo Excel o leer nombres de hojas '{file_path}': {e_open}")
+            print("---------- MODULE TRACEBACK DETALLADO (apertura/nombres hoja) ----------")
+            traceback.print_exc()
+            print("-------------------------------------------------------------------")
+            return None # Retornar None si la apertura inicial falla
+
+        dataframes = {} # Mover la inicialización aquí, después de confirmar que sheet_names existe
+
+        if not sheet_names:
+            print("Advertencia MODULE: El archivo Excel no contiene hojas.")
+            return {} # Retornar diccionario vacío si no hay hojas
+
+        for sheet_name in sheet_names:
+            try:
+                print(f"DEBUG MODULE: Intentando parsear la hoja '{sheet_name}'")
+                df = excel_data.parse(sheet_name)
+                dataframes[sheet_name] = df
+                print(f"  MODULE Hoja '{sheet_name}' cargada exitosamente.")
+            except Exception as e_parse:
+                print(f"  MODULE Error al parsear la hoja '{sheet_name}'.")
+                print(f"  MODULE Detalle del error: {e_parse}")
+                print("---------- MODULE TRACEBACK DETALLADO (parseo hoja) ----------")
+                traceback.print_exc()
+                print("---------------------------------------------------------")
+
+        if not dataframes: # Si ninguna hoja se pudo parsear correctamente
+            print(f"Advertencia MODULE: No se pudo parsear ninguna hoja de datos válida del archivo (diccionario 'dataframes' está vacío).")
+        
+        print(f"DEBUG MODULE: Retornando 'dataframes'. Es vacío? {not bool(dataframes)}")
+        return dataframes
+           
+    except FileNotFoundError: # Este except es para pd.ExcelFile(file_path)
+        print(f"MODULE Error: Archivo no encontrado en la ruta: {file_path}")
+        return None 
+           
+    except Exception as e_load: # Otro error genérico para pd.ExcelFile(file_path)
+        print(f"MODULE Error CRÍTICO (inesperado) al procesar el archivo Excel '{file_path}': {e_load}")
+        print("---------- MODULE TRACEBACK DETALLADO (carga general) ----------")
+        traceback.print_exc() 
+        print("-----------------------------------------------------------")
+        return None
+
+def prompt_select_sheets(available_sheet_names):
+    # ... (tu código actual para prompt_select_sheets, que está bien) ...
+    if not available_sheet_names:
+        print("No hay hojas disponibles para seleccionar.")
+        return []
+    print("\n--- Hojas (Indicadores) Disponibles para Selección ---")
+    for i, sheet_name in enumerate(available_sheet_names):
+        print(f"  {i+1}. {sheet_name}")
+    selected_names_final = []
+    while True: 
+        selection_str = input("Ingresa los números de las hojas/indicadores que quieres usar, separados por comas (ej. 1,3), o deja vacío para no seleccionar ninguna: ")
+        if not selection_str.strip(): 
+            print("No se seleccionó ninguna hoja.")
+            return []
+        try:
+            selected_indices = [int(idx.strip()) - 1 for idx in selection_str.split(',')]
+            temp_selected_names = []
+            for i in selected_indices:
+                if 0 <= i < len(available_sheet_names):
+                    temp_selected_names.append(available_sheet_names[i])
+                else:
+                    print(f"Advertencia: El número {i+1} está fuera de rango y será ignorado.")
+            seen = set()
+            selected_names_final = [x for x in temp_selected_names if not (x in seen or seen.add(x))]
+            if selected_names_final:
+                print("\n--- Hojas/Indicadores Seleccionados ---")
+                for name in selected_names_final:
+                    print(f"  - {name}")
+                return selected_names_final
+            else:
+                print("No se seleccionó ninguna hoja válida con los números ingresados. Intenta de nuevo.")
+        except ValueError:
+            print("Error: Entrada inválida. Ingresa solo números separados por comas. Intenta de nuevo.")
+
+def transformar_df_indicador_v1(df_original, col_paises_nombre_original='Unnamed: 0', nuevo_nombre_indice_paises='Pais'):
+    # ... (tu código actual para transformar_df_indicador_v1, que está bien) ...
+    # ... (SOLO ASEGÚRATE DE NO TENER 'import traceback' DENTRO DE ESTA FUNCIÓN)...
+    print(f"\n--- Transformando DataFrame (Estructura V1) ---")
+    if df_original is None or df_original.empty:
+        print("  DataFrame original está vacío. No se puede transformar.")
+        return None
+    try:
+        df = df_original.copy()
+        if col_paises_nombre_original not in df.columns:
+            print(f"  Error: La columna de países '{col_paises_nombre_original}' no se encuentra en el DataFrame.")
+            print(f"  Columnas disponibles: {df.columns.tolist()}")
+            return None
+        df.set_index(col_paises_nombre_original, inplace=True)
+        df.index.name = nuevo_nombre_indice_paises
+        print(f"  Índice establecido a '{df.index.name}'. Columnas actuales (años): {df.columns.tolist()}")
+        print("  Transponiendo DataFrame...")
+        df_transformado = df.transpose()
+        df_transformado.index.name = 'Año'
+        df_transformado.index = pd.to_numeric(df_transformado.index, errors='coerce')
+        original_rows = len(df_transformado)
+        df_transformado.dropna(axis=0, how='all', subset=None, inplace=True)
+        df_transformado = df_transformado[df_transformado.index.notna()]
+        if len(df_transformado) < original_rows:
+            print(f"  Se eliminaron {original_rows - len(df_transformado)} filas con Años no válidos o completamente vacías.")
+        if df_transformado.empty:
+            print("  DataFrame vacío después de eliminar Años no válidos.")
+            return None
+        try:
+            df_transformado.index = df_transformado.index.astype(int)
+        except ValueError:
+            print("  Advertencia: El índice de Años no pudo ser convertido a entero.")
+        print("  Convirtiendo valores de datos a numérico...")
+        for col_pais in df_transformado.columns:
+            df_transformado[col_pais] = pd.to_numeric(df_transformado[col_pais], errors='coerce')
+        df_transformado.dropna(axis=1, how='all', inplace=True)
+        print("  Transformación V1 completada.")
+        return df_transformado
+    except Exception as e:
+        print(f"  Error durante la transformación del DataFrame (V1): {e}")
+        traceback.print_exc() 
+        return None
+    
+def prompt_select_country(data_transformada_indicadores):
+    """
+    Permite al usuario seleccionar un país de los disponibles en los DataFrames transformados.
+
+    Args:
+        data_transformada_indicadores (dict): Diccionario donde las claves son nombres de indicadores
+                                              y los valores son DataFrames con Años como índice
+                                              y Países como columnas.
+    Returns:
+        str: El nombre del país seleccionado, o None si no se selecciona ninguno o hay error.
+    """
+    if not data_transformada_indicadores:
+        print("No hay datos transformados disponibles para seleccionar un país.")
+        return None
+
+    # Tomar el primer DataFrame del diccionario para obtener la lista de países (columnas)
+    # Asumimos que todos los DataFrames transformados tienen una estructura de columnas similar (países)
+    primer_nombre_indicador = next(iter(data_transformada_indicadores))
+    df_referencia_paises = data_transformada_indicadores[primer_nombre_indicador]
+
+    if df_referencia_paises is None or df_referencia_paises.empty:
+        print(f"El DataFrame de referencia ('{primer_nombre_indicador}') para listar países está vacío o no existe.")
+        return None
+
+    paises_disponibles = df_referencia_paises.columns.tolist()
+
+    if not paises_disponibles:
+        print("No se encontraron países (columnas) en el DataFrame de referencia.")
+        return None
+
+    print("\n--- Países Disponibles para Selección ---")
+    for i, pais_nombre in enumerate(paises_disponibles):
+        print(f"  {i+1}. {pais_nombre}")
+
+    pais_seleccionado_final = None
+    while True: # Bucle hasta obtener una selección válida o vacía
+        selection_str = input("Ingresa el número del país que quieres analizar, o deja vacío para no seleccionar: ")
+        
+        if not selection_str.strip():
+            print("No se seleccionó ningún país.")
+            return None
+
+        try:
+            selected_index = int(selection_str.strip()) - 1
+            
+            if 0 <= selected_index < len(paises_disponibles):
+                pais_seleccionado_final = paises_disponibles[selected_index]
+                print(f"\n--- País Seleccionado para Análisis ---")
+                print(f"  - {pais_seleccionado_final}")
+                return pais_seleccionado_final
+            else:
+                print(f"Advertencia: El número {selected_index + 1} está fuera de rango. Intenta de nuevo.")
+        
+        except ValueError:
+            print("Error: Entrada inválida. Ingresa solo un número. Intenta de nuevo.")
+
+# --- Bloque de prueba ---
+if __name__ == '__main__':
+    print("--- Ejecutando pruebas para data_loader_module.py ---")
+    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\SOCIOECONOMICOS_V1.xlsx"
+    
+    # Llama directamente a las funciones definidas arriba en el módulo
+    all_data_v1 = load_excel_file(test_file_path_v1)
+
+    if all_data_v1 and 'DT.TDS.DECT.GN.ZS' in all_data_v1: # Asegúrate que esta hoja exista para probar
+        df_para_transformar_v1 = all_data_v1['DT.TDS.DECT.GN.ZS']
+        print("\nDataFrame original V1 de DT.TDS.DECT.GN.ZS (primeras filas):")
+        print(df_para_transformar_v1.head())
+        
+        df_transformado_v1 = transformar_df_indicador_v1(df_para_transformar_v1, 
+                                                        col_paises_nombre_original='Unnamed: 0', # VERIFICA este nombre
+                                                        nuevo_nombre_indice_paises='Pais')
+
+        if df_transformado_v1 is not None:
+            print("\n--- DataFrame REAL V1 Transformado (DT.TDS.DECT.GN.ZS) ---")
+            print(df_transformado_v1.head())
+            print(f"Índice: {df_transformado_v1.index.name}, Tipo: {df_transformado_v1.index.dtype}")
+            print(f"Columnas (Países): {df_transformado_v1.columns.tolist()}")
+            print(f"Forma del DataFrame transformado: {df_transformado_v1.shape}")
+        else:
+            print("Fallo la transformación del DataFrame V1 real.")
+    elif not all_data_v1:
+        print("No se cargaron datos para la prueba de transformación.")
+    else:
+        print(f"La hoja 'DT.TDS.DECT.GN.ZS' no se encontró en los datos cargados para la prueba de transformación.")
