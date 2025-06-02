@@ -1,3 +1,4 @@
+# data_loader_module.py
 import pandas as pd
 import numpy as np # Necesario para transformar_df_indicador_v1
 import traceback   # Importación única al principio
