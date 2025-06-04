@@ -60,42 +60,77 @@ def load_excel_file(file_path):
         return None
 
 def prompt_select_sheets(available_sheet_names):
-    # ... (tu código actual para prompt_select_sheets, que está bien) ...
+    """
+    Permite al usuario seleccionar hojas (indicadores) de una lista.
+    Ahora incluye la opción de escribir 'TODOS' para seleccionar todas las hojas.
+
+    Args:
+        available_sheet_names (list): Lista de nombres de hojas disponibles.
+
+    Returns:
+        list: Lista de nombres de hojas seleccionadas. Vacía si no se selecciona ninguna.
+    """
     if not available_sheet_names:
         print("No hay hojas disponibles para seleccionar.")
         return []
+
     print("\n--- Hojas (Indicadores) Disponibles para Selección ---")
     for i, sheet_name in enumerate(available_sheet_names):
         print(f"  {i+1}. {sheet_name}")
+
     selected_names_final = []
-    while True: 
-        selection_str = input("Ingresa los números de las hojas/indicadores que quieres usar, separados por comas (ej. 1,3), o deja vacío para no seleccionar ninguna: ")
-        if not selection_str.strip(): 
+    while True:
+        # Mensaje del prompt para el usuario
+        prompt_message = (
+            "Ingresa los números de las hojas/indicadores que quieres usar, separados por comas (ej. 1,3),\n"
+            "escribe 'TODOS' para seleccionar todas, o deja vacío para no seleccionar ninguna: "
+        )
+        selection_str = input(prompt_message)
+
+        # Comprobar si el usuario escribió 'TODOS' (insensible a mayúsculas/minúsculas)
+        if selection_str.strip().lower() == 'todos':
+            print("\n--- Todas las Hojas/Indicadores Seleccionados ---")
+            # No es necesario imprimir todos aquí, main.py ya lo hace con los seleccionados.
+            # Pero si quieres una confirmación inmediata:
+            # for name in available_sheet_names:
+            #     print(f"  - {name}")
+            return available_sheet_names  # Devuelve la lista completa de nombres de hojas
+
+        # Comprobar si la entrada está vacía
+        if not selection_str.strip():
             print("No se seleccionó ninguna hoja.")
             return []
+
         try:
             selected_indices = [int(idx.strip()) - 1 for idx in selection_str.split(',')]
             temp_selected_names = []
+            valid_selection_made = False
             for i in selected_indices:
                 if 0 <= i < len(available_sheet_names):
                     temp_selected_names.append(available_sheet_names[i])
+                    valid_selection_made = True
                 else:
                     print(f"Advertencia: El número {i+1} está fuera de rango y será ignorado.")
+
+            if not valid_selection_made and temp_selected_names: # Si solo hubo inválidos pero se intentó algo
+                 print("Todos los números ingresados estaban fuera de rango. Intenta de nuevo.")
+                 continue
+
+
+            # Eliminar duplicados manteniendo el orden de la primera aparición
             seen = set()
             selected_names_final = [x for x in temp_selected_names if not (x in seen or seen.add(x))]
+
             if selected_names_final:
-                print("\n--- Hojas/Indicadores Seleccionados ---")
-                for name in selected_names_final:
-                    print(f"  - {name}")
                 return selected_names_final
             else:
                 print("No se seleccionó ninguna hoja válida con los números ingresados. Intenta de nuevo.")
+        
         except ValueError:
-            print("Error: Entrada inválida. Ingresa solo números separados por comas. Intenta de nuevo.")
+            # Mensaje de error actualizado
+            print("Error: Entrada inválida. Ingresa solo números separados por comas (ej. 1,3), la palabra 'TODOS', o deja vacío. Intenta de nuevo.")
 
 def transformar_df_indicador_v1(df_original, col_paises_nombre_original='Unnamed: 0', nuevo_nombre_indice_paises='Pais'):
-    # ... (tu código actual para transformar_df_indicador_v1, que está bien) ...
-    # ... (SOLO ASEGÚRATE DE NO TENER 'import traceback' DENTRO DE ESTA FUNCIÓN)...
     print(f"\n--- Transformando DataFrame (Estructura V1) ---")
     if df_original is None or df_original.empty:
         print("  DataFrame original está vacío. No se puede transformar.")
