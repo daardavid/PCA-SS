@@ -117,7 +117,7 @@ def obtener_varianza_explicada(pca_model):
         return None, None
     
     try:
-        # Atributo de scikit-learn PCA que almacena el porcentaje de varianza explicado por cada componente.
+        # Atributo de scikit-learn PCA, almacena el porcentaje de varianza explicado por cada componente.
         explained_variance_ratio = pca_model.explained_variance_ratio_
         
         # Calculamos la varianza acumulada

@@ -1,8 +1,8 @@
 # data_loader_module.py
 import pandas as pd
-import numpy as np # Necesario para transformar_df_indicador_v1
+import numpy as np 
 import traceback   # Importación única al principio
-
+1
 def load_excel_file(file_path):
     # PRINT DE DEPURACIÓN INMEDIATO AL ENTRAR A LA FUNCIÓN
     print(f"DEBUG MODULE: Función load_excel_file llamada con ruta: {file_path}")
@@ -294,6 +294,97 @@ def consolidate_data_for_country(data_transformada_indicadores, country_to_analy
         import traceback
         traceback.print_exc()
         return pd.DataFrame()
+    
+# En data_loader_module.py (o adaptado para main.py)
+def preparar_datos_corte_transversal(all_sheets_data, selected_indicators_codes, selected_countries_names, target_year, col_paises_nombre_original='Unnamed: 0'):
+    """
+    Prepara un DataFrame para un análisis de corte transversal para un año específico.
+
+    Args:
+        all_sheets_data (dict): Diccionario con DataFrames originales por indicador (hojas del Excel).
+                                Se espera que cada DF tenga una columna con nombres de países y años como columnas.
+        selected_indicators_codes (list): Lista de códigos/nombres de hoja de los indicadores a incluir.
+        selected_countries_names (list): Lista de nombres de países a incluir.
+        target_year (int or str): El año específico para el cual extraer los datos.
+        col_paises_nombre_original (str): Nombre de la columna que contiene los nombres de los países
+                                          en los DataFrames de all_sheets_data.
+
+    Returns:
+        pd.DataFrame: DataFrame con países como índice, indicadores como columnas, para el target_year.
+                      Puede contener NaNs si los datos no están disponibles.
+    """
+    print(f"\n--- Preparando datos de corte transversal para el año: {target_year} ---")
+    print(f"Países seleccionados: {', '.join(selected_countries_names)}")
+    print(f"Indicadores seleccionados: {', '.join(selected_indicators_codes)}")
+
+    # Convertir target_year a string si es necesario, ya que las columnas de año podrían ser strings o ints
+    target_year_str = str(target_year)
+    target_year_int = int(target_year)
+
+    list_of_series_for_year = []
+
+    for indicator_code in selected_indicators_codes:
+        if indicator_code not in all_sheets_data:
+            print(f"Advertencia: Indicador '{indicator_code}' no encontrado en los datos cargados. Se omitirá.")
+            continue
+        
+        df_indicator = all_sheets_data[indicator_code].copy()
+
+        # Asegurar que la columna de países sea el índice
+        if col_paises_nombre_original in df_indicator.columns:
+            try:
+                df_indicator.set_index(col_paises_nombre_original, inplace=True)
+            except Exception as e_idx:
+                print(f"Error al establecer índice para el indicador '{indicator_code}': {e_idx}. Se omitirá.")
+                continue
+        elif df_indicator.index.name == col_paises_nombre_original:
+            pass # El índice ya está bien
+        else:
+            print(f"Advertencia: Columna de países '{col_paises_nombre_original}' no encontrada como columna o índice en indicador '{indicator_code}'. Se omitirá.")
+            continue
+            
+        # Verificar si la columna del año objetivo existe (como int o str)
+        year_col_to_use = None
+        if target_year_int in df_indicator.columns:
+            year_col_to_use = target_year_int
+        elif target_year_str in df_indicator.columns:
+            year_col_to_use = target_year_str
+            
+        if year_col_to_use is None:
+            print(f"Advertencia: Año '{target_year}' no encontrado como columna en el indicador '{indicator_code}'. Se omitirá este indicador para este año.")
+            continue
+            
+        # Extraer la serie para el año y los países seleccionados
+        # Usar .reindex() para asegurar que todos los países seleccionados estén presentes (con NaN si no hay dato)
+        # y en el orden deseado.
+        try:
+            indicator_series_for_year = df_indicator.loc[selected_countries_names, year_col_to_use]
+            indicator_series_for_year.name = indicator_code # El nombre de la serie será el código del indicador
+            list_of_series_for_year.append(indicator_series_for_year)
+        except KeyError as e_key:
+            print(f"Advertencia: Algunos países no encontrados o problema al acceder a datos para el indicador '{indicator_code}', año '{target_year}'. Detalle: {e_key}")
+            # Crear una serie de NaNs para este indicador para mantener la estructura
+            nan_series = pd.Series(index=selected_countries_names, name=indicator_code, dtype=float)
+            list_of_series_for_year.append(nan_series)
+        except Exception as e_general:
+            print(f"Error general al procesar indicador '{indicator_code}', año '{target_year}': {e_general}")
+            nan_series = pd.Series(index=selected_countries_names, name=indicator_code, dtype=float)
+            list_of_series_for_year.append(nan_series)
+
+
+    if not list_of_series_for_year:
+        print(f"No se pudieron extraer datos para ningún indicador para el año {target_year} y los países seleccionados.")
+        return pd.DataFrame(index=selected_countries_names) # DF vacío con índice de países
+
+    # Concatenar las series en un DataFrame (cada serie es una columna)
+    df_cross_section = pd.concat(list_of_series_for_year, axis=1)
+    
+    # Asegurar que el índice del DataFrame final sea exactamente selected_countries_names y en ese orden
+    df_cross_section = df_cross_section.reindex(selected_countries_names)
+
+    print(f"DataFrame para el año {target_year} (primeras filas):")
+    print(df_cross_section.head())
+    return df_cross_section
 
 # --- Bloque de prueba ---
 if __name__ == '__main__':

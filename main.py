@@ -41,12 +41,12 @@ MAPEO_INDICADORES = {
 }
 
 # --- CONFIGURACIÓN ---
-FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\INDICADORES WDI_V2.xlsx")
+FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\INDICADORES WDI_V6_vf.xlsm")
 OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
 
 
 if __name__ == "__main__":
-    print("Herramienta de Análisis de Datos y PCA v1.1.0") # MODIFICADO: Versión incrementada, lo estoy subiendo a Github
+    print("Herramienta de Análisis de Datos y PCA v1.2.0") # MODIFICADO: Versión incrementada, lo estoy subiendo a Github
     print("---------------------------------------------")
 
     # Crear el directorio de salida si no existe
@@ -173,21 +173,49 @@ if __name__ == "__main__":
                 print(f"   Scaler mean: {scaler_utilizado.mean_}, Scaler var: {scaler_utilizado.var_}")
         else:
             print("\nNo se generó un DataFrame estandarizado.")
+            
+        df_covarianza = pd.DataFrame() # Inicializar DataFrame vacío
+
     
-    # ----- NUEVO: 8. ANÁLISIS DE COMPONENTES PRINCIPALES (PCA) -----
-    print("\n\n--- 8. Iniciando Análisis de Componentes Principales (PCA) ---")
+# 8. ANÁLISIS DE COVARIANZA Y COMPONENTES PRINCIPALES (PCA)
+    print("\n\n--- 8. Iniciando Análisis de Covarianza y Componentes Principales (PCA) ---")
+    
+    # Inicializar variables que se usarán después
     pca_model_final = None
     df_componentes_principales = pd.DataFrame()
-    df_cargas = pd.DataFrame()
-    df_varianza_explicada_pca = pd.DataFrame() # Para guardar en Excel
+    df_cargas = pd.DataFrame() # Esta será la versión final con índice mapeado para guardar/mostrar
+    df_varianza_explicada_pca = pd.DataFrame()
 
+    # ÚNICO bloque 'if' para datos estandarizados limpios
     if not df_estandarizado.empty and df_estandarizado.isnull().sum().sum() == 0:
-        # a. Realizar PCA inicial (con todos los componentes para ver la varianza)
-        print("   Realizando PCA inicial para análisis de varianza...")
+        
+        # ----- Calcular la matriz de covarianza -----
+        try:
+            numeric_cols_for_cov = df_estandarizado.select_dtypes(include=np.number)
+            if not numeric_cols_for_cov.empty:
+                # df_covarianza se calcula aquí usando los nombres de columna originales de df_estandarizado
+                df_covarianza_raw = numeric_cols_for_cov.cov() # Guardar con nombres originales/crudos
+                
+                print("\n   --- Matriz de Covarianza (Correlación para datos estandarizados) ---")
+                # Para mejor visualización en consola, creamos una copia con nombres mapeados
+                df_cov_display = df_covarianza_raw.copy()
+                df_cov_display.index = [MAPEO_INDICADORES.get(col, col) for col in df_cov_display.index]
+                df_cov_display.columns = [MAPEO_INDICADORES.get(col, col) for col in df_cov_display.columns]
+                print(df_cov_display.head()) 
+                
+                # Para guardar en Excel, también usaremos una versión con nombres mapeados (ver sección 10)
+                # df_covarianza se asignará a df_covarianza_raw para ser usada en el bloque de guardado
+                df_covarianza = df_covarianza_raw 
+            else:
+                print("   Advertencia: No hay columnas numéricas en df_estandarizado para calcular la matriz de covarianza.")
+        except Exception as e_cov:
+            print(f"   Error al calcular la matriz de covarianza: {e_cov}")
+
+        # ----- Continuar con PCA -----
+        print("\n   Realizando PCA inicial para análisis de varianza...")
         pca_model_inicial, _ = pca_mod.realizar_pca(df_estandarizado, n_components=None)
 
         if pca_model_inicial:
-            # b. Obtener y mostrar varianza explicada
             evr, cum_evr = pca_mod.obtener_varianza_explicada(pca_model_inicial)
             if evr is not None and cum_evr is not None:
                 print("\n   Varianza Explicada por Componente Principal (PCA Inicial):")
@@ -198,11 +226,9 @@ if __name__ == "__main__":
                 }).set_index('Componente')
                 print(df_varianza_explicada_pca)
 
-                # c. Graficar Scree Plot
-                if input("\n   ¿Deseas ver el Scree Plot para ayudar a seleccionar el número de componentes? (s/n): ").strip().lower() == 's':
+                if input("\n   ¿Deseas ver el Scree Plot...? (s/n): ").strip().lower() == 's':
                     pca_mod.graficar_scree_plot(evr)
 
-                # d. Seleccionar el número de componentes a retener
                 sugg_90 = np.where(cum_evr >= 0.90)[0]
                 sugg_95 = np.where(cum_evr >= 0.95)[0]
                 n_sugg_90 = sugg_90[0] + 1 if len(sugg_90) > 0 else None
@@ -215,27 +241,25 @@ if __name__ == "__main__":
                 )
 
                 if n_comp_seleccionados > 0:
-                     # e. Realizar PCA final con el número de componentes seleccionados
                     print(f"\n   Realizando PCA final con {n_comp_seleccionados} componentes seleccionados...")
                     pca_model_final, df_componentes_principales = pca_mod.realizar_pca(df_estandarizado, n_components=n_comp_seleccionados)
 
                     if df_componentes_principales is not None and not df_componentes_principales.empty:
                         print(f"\n   --- Componentes Principales para {country_to_analyze} (Top {n_comp_seleccionados}) ---")
                         print(df_componentes_principales.head())
-                        df_componentes_principales.info()
+                        # df_componentes_principales.info() # Opcional
 
-                        # f. Obtener y mostrar las cargas de los componentes
-                        # Los nombres de las columnas de df_estandarizado son los indicadores originales
-                        nombres_indicadores_pca = df_estandarizado.columns.tolist()
-                        nombres_mapeados_para_cargas = [MAPEO_INDICADORES.get(code, code) for code in nombres_indicadores_pca]
+                        # Obtener cargas con los nombres de columna originales de df_estandarizado
+                        nombres_indicadores_originales_pca = df_estandarizado.columns.tolist()
+                        df_cargas_temp = pca_mod.obtener_cargas_pca(pca_model_final, nombres_indicadores_originales_pca)
                         
-                        df_cargas_temp = pca_mod.obtener_cargas_pca(pca_model_final, nombres_indicadores_pca)
                         if df_cargas_temp is not None:
-                            df_cargas = df_cargas_temp.copy()
-                            # Renombrar índice de df_cargas para mejor legibilidad en la salida
-                            df_cargas.index = nombres_mapeados_para_cargas
+                            # Mapear el índice de df_cargas UNA VEZ para mostrar y guardar
+                            df_cargas = df_cargas_temp.copy() # df_cargas ahora es la versión final con índice mapeado
+                            df_cargas.index = [MAPEO_INDICADORES.get(code, code) for code in df_cargas_temp.index] # Usar df_cargas_temp.index aquí
+                            
                             print("\n   --- Cargas de los Componentes Principales ---")
-                            print(df_cargas)
+                            print(df_cargas) # Imprimir la versión con índice mapeado
                         else:
                             print("   No se pudieron obtener las cargas del PCA.")
                     else:
@@ -246,13 +270,199 @@ if __name__ == "__main__":
                 print("   No se pudo obtener la varianza explicada del PCA inicial.")
         else:
             print("   No se pudo inicializar el modelo PCA inicial.")
+    
+    # Los mensajes de advertencia para df_estandarizado vacío o con NaNs se mueven aquí
     elif df_estandarizado.empty:
-        print("\n   El DataFrame estandarizado está vacío. No se puede realizar PCA.")
-    else: # Contiene NaNs
-        print("\n   El DataFrame estandarizado contiene NaNs. No se puede realizar PCA.")
+        print("\n   El DataFrame estandarizado está vacío. No se puede realizar PCA ni calcular covarianza.")
+    else: # df_estandarizado contiene NaNs
+        print("\n   El DataFrame estandarizado contiene NaNs. No se puede realizar PCA ni calcular covarianza.")
 
-    # ----- MODIFICADO: 9. VISUALIZACIÓN DE DATOS EN DIFERENTES ETAPAS -----
-    print("\n\n--- 9. Visualizando Datos ---")
+
+# 9. ANÁLISIS DE CORTE TRANSVERSAL CON BIPLOTS -----
+    if input("\n¿Deseas realizar un análisis de corte transversal con Biplots? (s/n): ").strip().lower() == 's':
+        
+        while True: # Bucle para permitir reintentar la selección de países/años/indicadores
+            print("\n--- Configuración del Análisis de Corte Transversal ---")
+            
+            # 1. Seleccionar Indicadores para el corte transversal
+            print("\nSelección de Indicadores para el Análisis de Corte Transversal:")
+            print("Indicadores disponibles en el archivo:")
+            for i, name in enumerate(available_sheet_names_list):
+                print(f"  {i+1}. {MAPEO_INDICADORES.get(name, name)}")
+            
+            selection_str_cs = input("Ingresa los números de los indicadores para el corte transversal, separados por coma (ej. 1,3) o 'TODOS': ").strip()
+            indicators_for_cross_section_codes = []
+            if selection_str_cs.lower() == 'todos':
+                indicators_for_cross_section_codes = available_sheet_names_list
+            elif selection_str_cs:
+                try:
+                    selected_indices_cs = [int(idx.strip()) - 1 for idx in selection_str_cs.split(',')]
+                    for i_idx in selected_indices_cs: # Renombrada la variable del bucle
+                        if 0 <= i_idx < len(available_sheet_names_list):
+                            indicators_for_cross_section_codes.append(available_sheet_names_list[i_idx])
+                        else:
+                            print(f"Advertencia: Índice de indicador {i_idx+1} fuera de rango.")
+                except ValueError:
+                    print("Entrada de indicadores inválida.")
+
+            if not indicators_for_cross_section_codes:
+                print("No se seleccionaron indicadores válidos para el análisis de corte transversal.")
+                retry_choice = input("¿Deseas intentar otra selección de indicadores o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
+                if retry_choice == 'n':
+                    break # Salir del bucle while y de la sección de corte transversal
+                else:
+                    continue # Volver al inicio del bucle while para reintentar
+
+            print(f"Se usarán los siguientes indicadores para el corte transversal: {', '.join([MAPEO_INDICADORES.get(n,n) for n in indicators_for_cross_section_codes])}")
+
+            # 2. Seleccionar Países
+            all_possible_countries = set()
+            if all_sheets_data:
+                first_indicator_df = next(iter(all_sheets_data.values()))
+                if 'Unnamed: 0' in first_indicator_df.columns:
+                     all_possible_countries.update(first_indicator_df['Unnamed: 0'].dropna().unique())
+            
+            if not all_possible_countries:
+                print("No se pudieron obtener nombres de países para la selección.")
+                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
+                if retry_choice == 'n':
+                    break 
+                else:
+                    continue
+
+            sorted_countries = sorted(list(all_possible_countries))
+            print("\nPaíses disponibles:")
+            for i, country_name in enumerate(sorted_countries): # 'i' se reutiliza aquí, es local al bucle
+                print(f"  {i+1}. {country_name}")
+            
+            country_indices_str = input("Ingresa los números de los países a incluir, separados por coma (ej. 1,5,10) o 'TODOS': ").strip()
+            selected_countries_for_cross = []
+            if country_indices_str.lower() == 'todos':
+                selected_countries_for_cross = sorted_countries
+            elif country_indices_str:
+                try:
+                    selected_country_indices = [int(idx.strip()) - 1 for idx in country_indices_str.split(',')]
+                    for i_country in selected_country_indices: # Renombrada la variable del bucle
+                        if 0 <= i_country < len(sorted_countries):
+                            selected_countries_for_cross.append(sorted_countries[i_country])
+                        else:
+                            print(f"Advertencia: Índice de país {i_country+1} fuera de rango.")
+                except ValueError:
+                    print("Entrada de países inválida.")
+            
+            if not selected_countries_for_cross:
+                print("No se seleccionaron países válidos para el análisis de corte transversal.")
+                retry_choice = input("No se pudieron seleccionar países. ¿Deseas intentar otra selección o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
+                if retry_choice == 'n':
+                    break 
+                else:
+                    continue 
+
+            # 3. Seleccionar Año(s)
+            year_str = input("Ingresa el año (o años separados por coma, ej. 2010,2015,2020) para el análisis de corte transversal: ").strip()
+            if not year_str:
+                print("No se ingresaron años.")
+                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
+                if retry_choice == 'n':
+                    break
+                else:
+                    continue
+            
+            target_years_str = [y.strip() for y in year_str.split(',')]
+            target_years = []
+            for y_s in target_years_str:
+                try:
+                    target_years.append(int(y_s))
+                except ValueError:
+                    print(f"Advertencia: Año '{y_s}' no es un número válido y será ignorado.")
+            
+            if not target_years:
+                print("No se ingresaron años válidos para procesar.")
+                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
+                if retry_choice == 'n':
+                    break
+                else:
+                    continue
+            
+            # Variable para rastrear si al menos un año tuvo éxito
+            at_least_one_year_successful = False
+
+            for year_to_analyze in target_years:
+                print(f"\n--- Procesando año: {year_to_analyze} ---")
+                df_year_cross_section = dl.preparar_datos_corte_transversal(
+                    all_sheets_data, 
+                    indicators_for_cross_section_codes, 
+                    selected_countries_for_cross, 
+                    year_to_analyze,
+                    col_paises_nombre_original='Unnamed: 0'
+                )
+
+                if df_year_cross_section.empty or df_year_cross_section.isnull().all().all():
+                    print(f"No hay datos suficientes para el análisis de PCA para el año {year_to_analyze}.")
+                    continue # Pasar al siguiente año
+                
+                print(f"Datos para PCA ({year_to_analyze}) ANTES de eliminar NaNs de países: {df_year_cross_section.shape[0]} países.")
+                df_year_cross_section_no_na = df_year_cross_section.dropna(axis=0, how='any')
+                print(f"Datos para PCA ({year_to_analyze}) DESPUÉS de eliminar NaNs: {df_year_cross_section_no_na.shape[0]} países.")
+
+                if df_year_cross_section_no_na.shape[0] < 2 or df_year_cross_section_no_na.shape[1] < 2 :
+                    print(f"No hay suficientes datos (países/indicadores) después de eliminar NaNs para PCA en el año {year_to_analyze}.")
+                    # No preguntamos reintentar aquí, simplemente informamos y pasamos al siguiente año
+                    continue 
+                
+                # Si llegamos aquí, tenemos datos suficientes para este año
+                at_least_one_year_successful = True
+
+                df_year_estandarizado, _ = dl_prep.estandarizar_datos(df_year_cross_section_no_na)
+
+                if df_year_estandarizado.empty:
+                    print(f"El DataFrame estandarizado para {year_to_analyze} está vacío. No se puede realizar PCA.")
+                    continue
+                
+                print(f"\nRealizando PCA para el año {year_to_analyze}...")
+                pca_model_cs, df_pc_scores_cs = pca_mod.realizar_pca(df_year_estandarizado, n_components=2)
+
+                if pca_model_cs and not df_pc_scores_cs.empty:
+                    nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
+                    dl_viz.graficar_biplot_corte_transversal(
+                        pca_model_cs,
+                        df_pc_scores_cs,
+                        df_year_estandarizado.columns.tolist(),
+                        nombres_indicadores_mapeados_cs,
+                        df_pc_scores_cs.index.tolist(),
+                        titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores"
+                    )
+                else:
+                    print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
+            
+            # Después de procesar todos los años solicitados
+            if not at_least_one_year_successful and target_years: # Si se intentaron años pero ninguno tuvo éxito
+                print("\nNo se pudo completar el análisis para ninguno de los años y selecciones especificadas debido a datos insuficientes.")
+                retry_choice_final = input("¿Deseas intentar otra configuración de corte transversal o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
+                if retry_choice_final == 'n':
+                    break # Salir del bucle while
+                # Si es 's', el bucle while continuará automáticamente
+            elif at_least_one_year_successful: # Si al menos un año fue exitoso, salimos del bucle de reintento.
+                print("\nAnálisis de corte transversal completado para los años con datos suficientes.")
+                break # Salir del bucle while
+            else: # No se ingresaron años o no se seleccionaron indicadores/países válidos antes.
+                  # El bucle while ya debería haber ofrecido reintentar o haber salido.
+                  # Si llegamos aquí sin 'at_least_one_year_successful' y sin 'target_years', es un caso que
+                  # debería ser manejado por los 'continue' o 'break' anteriores.
+                  # Por si acaso, ofrecemos una salida.
+                if not target_years: # Si la lista de años a procesar quedó vacía
+                    retry_choice_final = input("No se especificaron años válidos. ¿Deseas intentar otra configuración o salir? (s/n): ").strip().lower()
+                    if retry_choice_final == 'n':
+                        break
+                    # else: el bucle while continuará
+            # Si no se entra a ningún 'if' de reintento/salida aquí, el bucle while continuará.
+            # Si un año fue exitoso, el 'break' anterior nos saca.
+            # Si no hubo años exitosos, también se ofrece reintentar o salir.
+            # Si el usuario no selecciona nada en los inputs iniciales, también se ofrece reintentar/salir.
+
+
+    # ----- MODIFICADO: 10. VISUALIZACIÓN DE DATOS EN DIFERENTES ETAPAS -----
+    print("\n\n--- 10. Visualizando Datos ---")
     if input("¿Deseas graficar las series de tiempo (Original, Imputado, Estandarizado, Componentes PCA)? (s/n): ").strip().lower() == 's':
         
         df_orig_graf = df_consolidado_original.rename(columns=MAPEO_INDICADORES)
@@ -284,39 +494,73 @@ if __name__ == "__main__":
             print("   No hay DataFrames válidos para graficar.")
 
 
-    # ----- MODIFICADO: 10. GUARDAR RESULTADOS EN EXCEL -----
-    print("\n\n--- 10. Guardando Resultados en Excel ---")
+    # 11. GUARDAR RESULTADOS EN EXCEL
+    print("\n\n--- 11. Guardando Resultados en Excel ---")
     if input("¿Deseas guardar los resultados en un archivo Excel? (s/n): ").strip().lower() == 's':
         try:
+            # Nombre del archivo Excel
             excel_filename = f"Reporte_Procesado_PCA_{country_to_analyze}_{nombre_estrategia_elegida if nombre_estrategia_elegida else 'SinImputar'}.xlsx"
             full_excel_path = OUTPUT_DIR / excel_filename
             
-            saved_sheets_list = []
+            saved_sheets_list = [] # Para llevar un registro de las hojas guardadas
 
             with pd.ExcelWriter(full_excel_path) as writer:
+                # Hoja 1: Datos Originales Consolidados
                 if not df_consolidado_original.empty:
-                    df_consolidado_original.to_excel(writer, sheet_name='1_Original', index=True)
-                    saved_sheets_list.append('1_Original')
+                    df_orig_to_save = df_consolidado_original.rename(columns=MAPEO_INDICADORES)
+                    df_orig_to_save.to_excel(writer, sheet_name='1_Original_Consolidado', index=True)
+                    saved_sheets_list.append('1_Original_Consolidado')
+
+                # Hoja 2: Datos Imputados
                 if not df_imputado.empty:
-                    df_imputado.to_excel(writer, sheet_name='2_Imputado', index=True)
-                    saved_sheets_list.append('2_Imputado')
+                    df_imp_to_save = df_imputado.rename(columns=MAPEO_INDICADORES)
+                    df_imp_to_save.to_excel(writer, sheet_name='2_Datos_Imputados', index=True)
+                    saved_sheets_list.append('2_Datos_Imputados')
+
+                # Hoja 3: Máscara de Imputación
                 if not mascara_imputados.empty:
-                    mascara_imputados.to_excel(writer, sheet_name='3_Mascara_Imputacion', index=True)
+                    # La máscara usa los nombres de columna originales. Podrías mapearlos si es útil.
+                    # Por ahora, la guardamos con los nombres originales para referencia directa.
+                    mascara_to_save = mascara_imputados.rename(columns=MAPEO_INDICADORES)
+                    mascara_to_save.to_excel(writer, sheet_name='3_Mascara_Imputacion', index=True)
                     saved_sheets_list.append('3_Mascara_Imputacion')
-                if not df_estandarizado.empty:
-                    df_estandarizado.to_excel(writer, sheet_name='4_Estandarizado', index=True)
-                    saved_sheets_list.append('4_Estandarizado')
                 
-                # NUEVO: Guardar resultados del PCA
-                if not df_varianza_explicada_pca.empty: # Guardar la tabla de varianza explicada
-                    df_varianza_explicada_pca.to_excel(writer, sheet_name='5_PCA_Varianza_Expl', index=True)
-                    saved_sheets_list.append('5_PCA_Varianza_Expl')
+                # Hoja 4: Datos Estandarizados (con nombres de columna mapeados)
+                if not df_estandarizado.empty:
+                    # df_estandarizado tiene los nombres de columna originales (códigos/nombres de hoja).
+                    # Creamos una versión con nombres mapeados para el Excel.
+                    df_est_to_save = df_estandarizado.rename(columns=MAPEO_INDICADORES)
+                    df_est_to_save.to_excel(writer, sheet_name='4_Datos_Estandarizados', index=True)
+                    saved_sheets_list.append('4_Datos_Estandarizados')
+                    # Si también quisieras guardar df_estandarizado con sus nombres de columna originales (los que entraron a PCA):
+                    # df_estandarizado.to_excel(writer, sheet_name='4b_Estandarizado_RawCols', index=True)
+
+                # Hoja 5: Matriz de Covarianza (con índice y columnas mapeados)
+                if not df_covarianza.empty:
+                    # df_covarianza fue calculada a partir de df_estandarizado, por lo que su
+                    # índice y columnas son los nombres originales de las columnas de df_estandarizado.
+                    df_cov_to_save = df_covarianza.copy()
+                    df_cov_to_save.index = [MAPEO_INDICADORES.get(idx, idx) for idx in df_covarianza.index]
+                    df_cov_to_save.columns = [MAPEO_INDICADORES.get(col, col) for col in df_covarianza.columns]
+                    df_cov_to_save.to_excel(writer, sheet_name='5_Matriz_Covarianza', index=True)
+                    saved_sheets_list.append('5_Matriz_Covarianza')
+                
+                # Hoja 6: Varianza Explicada por PCA
+                if not df_varianza_explicada_pca.empty:
+                    df_varianza_explicada_pca.to_excel(writer, sheet_name='6_PCA_Varianza_Expl', index=True)
+                    saved_sheets_list.append('6_PCA_Varianza_Expl')
+
+                # Hoja 7: Componentes Principales
                 if not df_componentes_principales.empty:
-                    df_componentes_principales.to_excel(writer, sheet_name='6_PCA_Componentes', index=True)
-                    saved_sheets_list.append('6_PCA_Componentes')
+                    df_componentes_principales.to_excel(writer, sheet_name='7_PCA_Componentes', index=True)
+                    saved_sheets_list.append('7_PCA_Componentes')
+
+                # Hoja 8: Cargas del PCA
                 if not df_cargas.empty:
-                    df_cargas.to_excel(writer, sheet_name='7_PCA_Cargas', index=True) # df_cargas ya tiene índice mapeado
-                    saved_sheets_list.append('7_PCA_Cargas')
+                    # Se asume que df_cargas (calculada en la sección 8) ya tiene su ÍNDICE mapeado
+                    # a nombres descriptivos. Sus columnas son 'PC1', 'PC2', etc.
+                    df_cargas.to_excel(writer, sheet_name='8_PCA_Cargas', index=True)
+                    saved_sheets_list.append('8_PCA_Cargas')
 
             if saved_sheets_list:
                 print(f"\nArchivo Excel con múltiples hojas guardado exitosamente en: {full_excel_path}")
@@ -329,6 +573,9 @@ if __name__ == "__main__":
             print("   Asegúrate de que el archivo no esté abierto y que tengas permisos de escritura en la carpeta.")
         except Exception as e_excel:
             print(f"   Error al intentar guardar el archivo Excel: {e_excel}")
+            # Considera añadir un traceback aquí si los errores son frecuentes o difíciles de diagnosticar
+            # import traceback
+            # traceback.print_exc()
 
     print("\n---------------------------------------------")
     print("Fin de la ejecución de la Herramienta de Análisis.")
