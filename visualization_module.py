@@ -1,7 +1,25 @@
 # visualization_module.py
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches #para la leyenda de los colores
 import pandas as pd
 import numpy as np
+from adjustText import adjust_text
+
+def maximizar_plot():
+    """Intenta maximizar la ventana del plot de Matplotlib para diferentes 'backends'."""
+    try:
+        # Esta función busca el manejador de la figura actual y llama al método
+        # de maximización correspondiente al sistema operativo y backend gráfico.
+        fig_manager = plt.get_current_fig_manager()
+        if hasattr(fig_manager, 'window'):
+            if hasattr(fig_manager.window, 'showMaximized'):
+                fig_manager.window.showMaximized() # Para backend Qt
+            elif hasattr(fig_manager.window, 'state'):
+                fig_manager.window.state('zoomed') # Para backend Tk
+        # Puedes añadir más condiciones para otros backends si es necesario (ej. WXAgg)
+    except Exception as e:
+        print(f"Advertencia: No se pudo maximizar la ventana del plot automáticamente: {e}")
+        print("El tamaño del gráfico se controlará con el parámetro 'figsize'.")
 
 def graficar_series_de_tiempo(dfs_dict, titulo_general="Visualización de Series de Tiempo"):
     """
@@ -150,96 +168,85 @@ def graficar_cada_df_en_ventana_separada(dfs_dict, titulo_base_ventana="Análisi
 
 def graficar_biplot_corte_transversal(pca_model, 
                                       df_pc_scores, 
-                                      nombres_indicadores_originales, # Para obtener las cargas correctamente
-                                      nombres_indicadores_etiquetas,  # Para las etiquetas en el gráfico
+                                      nombres_indicadores_originales,
+                                      nombres_indicadores_etiquetas,  
                                       nombres_individuos_etiquetas, 
+                                      grupos_individuos=None,
+                                      mapa_de_colores=None,
                                       titulo="Biplot PCA",
-                                      pc_x=0, pc_y=1): # Índices de los componentes a graficar (0 para PC1, 1 para PC2)
+                                      pc_x=0, pc_y=1):
     """
-    Crea un biplot para un análisis de PCA de corte transversal.
-
-    Args:
-        pca_model: Objeto PCA de scikit-learn ajustado.
-        df_pc_scores (pd.DataFrame): DataFrame con los scores de los componentes principales para los individuos (países).
-                                     Índice: nombres de individuos, Columnas: 'PC1', 'PC2', ...
-        nombres_indicadores_originales (list): Lista de los nombres/códigos originales de los indicadores
-                                             (columnas del DataFrame que entró a pca_model.fit()).
-        nombres_indicadores_etiquetas (list): Lista de nombres descriptivos para los indicadores (para las etiquetas).
-        nombres_individuos_etiquetas (list): Lista de nombres de los individuos (países) para las etiquetas.
-        titulo (str): Título del gráfico.
-        pc_x (int): Índice del componente principal para el eje X (default 0, es decir, PC1).
-        pc_y (int): Índice del componente principal para el eje Y (default 1, es decir, PC2).
+    [MEJORADA v2] Crea un biplot maximizado para un análisis de PCA de corte transversal.
     """
     if pca_model is None or df_pc_scores.empty:
         print("Modelo PCA o scores no disponibles para generar biplot.")
         return
 
-    scores = df_pc_scores.iloc[:, [pc_x, pc_y]].values # Usar .iloc para seleccionar por posición
-    loadings = pca_model.components_[[pc_x, pc_y], :].T # pca_model.components_ es (n_components, n_features)
+    scores = df_pc_scores.iloc[:, [pc_x, pc_y]].values
+    loadings = pca_model.components_[[pc_x, pc_y], :].T
 
     if len(nombres_indicadores_originales) != loadings.shape[0]:
-        print("Error: Discrepancia entre número de indicadores y forma de las cargas.")
-        print(f"Indicadores: {len(nombres_indicadores_originales)}, Cargas features: {loadings.shape[0]}")
+        print("Error: Discrepancia en el número de indicadores y forma de las cargas.")
         return
-    if len(nombres_indicadores_etiquetas) != len(nombres_indicadores_originales):
-        print("Advertencia: El número de etiquetas de indicadores no coincide con el número de indicadores originales.")
-        # Usar nombres originales si las etiquetas no coinciden en longitud
-        nombres_indicadores_etiquetas = nombres_indicadores_originales
-
-
+    
     xs = scores[:, 0]
     ys = scores[:, 1]
     
-    # Escalar las cargas para que se vean bien en el mismo gráfico que los scores
-    # Esto es a menudo heurístico. Puedes ajustar el 'scalefactor'.
-    # Una forma es escalar por la desviación estándar de los scores o un factor fijo.
-    # O escalar para que el vector más largo de las cargas tenga una longitud similar al rango de los scores.
-    
-    # Calculamos un factor de escala para las cargas
-    # Esto es para que los vectores de las cargas no sean ni demasiado pequeños ni demasiado grandes
-    # en comparación con la dispersión de los scores de los individuos.
-    # Es una heurística simple:
+    # Escalar las cargas
     max_score_range = max(abs(xs).max(), abs(ys).max()) 
     max_loading_val = np.abs(loadings).max()
-    if max_loading_val == 0: max_loading_val = 1 # Evitar división por cero
-    scalefactor = max_score_range / max_loading_val * 0.7 # 0.7 es un factor de ajuste visual
-
+    if max_loading_val == 0: max_loading_val = 1
+    scalefactor = max_score_range / max_loading_val * 0.7 
     loadings_scaled = loadings * scalefactor
 
-    plt.figure(figsize=(12, 10))
+    # Usar un figsize grande como fallback, la maximización lo ajustará si es posible
+    plt.figure(figsize=(18, 14)) 
+    ax = plt.gca()
+
+    # Asignar colores a los países
+    colores_individuos = 'blue'
+    if grupos_individuos and mapa_de_colores:
+        colores_individuos = [mapa_de_colores.get(grupo, 'gray') for grupo in grupos_individuos]
     
     # Graficar individuos (países)
-    plt.scatter(xs, ys, s=50, alpha=0.7, color='blue')
-    for i, name in enumerate(nombres_individuos_etiquetas):
-        plt.text(xs[i] * 1.03, ys[i] * 1.03, name, fontsize=9) # Ajustar posición de texto
+    ax.scatter(xs, ys, s=60, alpha=0.7, c=colores_individuos)
+    textos_paises = [ax.text(xs[i], ys[i], name, fontsize=10) for i, name in enumerate(nombres_individuos_etiquetas)]
+    adjust_text(textos_paises, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5, alpha=0.6))
 
-    # Graficar variables (indicadores) como vectores desde el origen
+    # Graficar variables (indicadores)
+    variable_texts = []
     for i, name in enumerate(nombres_indicadores_etiquetas):
-        plt.arrow(0, 0, loadings_scaled[i, 0], loadings_scaled[i, 1], 
-                  color='red', alpha=0.8, head_width=0.03 * max_score_range * 0.1, # Ajustar head_width
-                  head_length=0.05 * max_score_range * 0.1) # Ajustar head_length
-        plt.text(loadings_scaled[i, 0] * 1.15, loadings_scaled[i, 1] * 1.15, 
-                 name, color='maroon', ha='center', va='center', fontsize=10)
+        ax.arrow(0, 0, loadings_scaled[i, 0], loadings_scaled[i, 1], 
+                  color='red', alpha=0.8, head_width=0.03 * max_score_range * 0.1, 
+                  head_length=0.05 * max_score_range * 0.1)
+        text_obj = ax.text(loadings_scaled[i, 0] * 1.15, loadings_scaled[i, 1] * 1.15, 
+                 name, color='maroon', ha='center', va='center', fontsize=11)
+        variable_texts.append(text_obj)
+    adjust_text(variable_texts)
 
-    pc_x_label = df_pc_scores.columns[pc_x] # ej. 'PC1'
-    pc_y_label = df_pc_scores.columns[pc_y] # ej. 'PC2'
+    # Leyenda para los grupos de países
+    if grupos_individuos and mapa_de_colores:
+        unique_groups_in_plot = sorted(list(set(grupos_individuos)))
+        legend_patches = [mpatches.Patch(color=mapa_de_colores.get(group, 'gray'), label=group) for group in unique_groups_in_plot]
+        ax.legend(handles=legend_patches, title="Grupos de Países", loc='upper left', bbox_to_anchor=(1.02, 1))
 
+    # Títulos y etiquetas de ejes
+    pc_x_label = df_pc_scores.columns[pc_x]
+    pc_y_label = df_pc_scores.columns[pc_y]
     var_pc_x = pca_model.explained_variance_ratio_[pc_x] * 100
     var_pc_y = pca_model.explained_variance_ratio_[pc_y] * 100
 
-    plt.xlabel(f"{pc_x_label} ({var_pc_x:.2f}% varianza explicada)", fontsize=12)
-    plt.ylabel(f"{pc_y_label} ({var_pc_y:.2f}% varianza explicada)", fontsize=12)
-    plt.title(titulo, fontsize=15)
-    plt.grid(True, linestyle=':', alpha=0.7)
-    plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
-    plt.axvline(0, color='black', linewidth=0.5, linestyle='--')
+    ax.set_xlabel(f"{pc_x_label} ({var_pc_x:.2f}% varianza explicada)", fontsize=12)
+    ax.set_ylabel(f"{pc_y_label} ({var_pc_y:.2f}% varianza explicada)", fontsize=12)
+    ax.set_title(titulo, fontsize=15)
+    ax.grid(True, linestyle=':', alpha=0.7)
+    ax.axhline(0, color='black', linewidth=0.5, linestyle='--')
+    ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
     
-    # Asegurar que los ejes tengan un rango similar o adecuado si es necesario
-    limit_x = max(abs(xs).max(), abs(loadings_scaled[:,0]).max()) * 1.2
-    limit_y = max(abs(ys).max(), abs(loadings_scaled[:,1]).max()) * 1.2
-    axis_limit = max(limit_x, limit_y)
-    plt.xlim([-axis_limit, axis_limit])
-    plt.ylim([-axis_limit, axis_limit])
-    
-    plt.tight_layout()
+    # Ajustar layout para hacer espacio a la leyenda
+    plt.tight_layout(rect=[0, 0, 0.88, 0.96])
+
+    # --- NUEVA LÍNEA PARA MAXIMIZAR ---
+    maximizar_plot()
+
     plt.show()
