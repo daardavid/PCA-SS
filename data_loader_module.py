@@ -324,6 +324,33 @@ def preparar_datos_corte_transversal(all_sheets_data, selected_indicators_codes,
     list_of_series_for_year = []
 
     for indicator_code in selected_indicators_codes:
+                # --- INICIO DEL BLOQUE DE DEBUGGING ---
+        # Reemplaza 'nombre de la hoja problemática' con una de las hojas que te da problemas.
+        # Por ejemplo, 'gross enrolmet total '. Fíjate en el espacio final si existe en el nombre de la hoja.
+        nombre_hoja_problematica = 'Intensidad carbon PPP 2021' 
+        
+        if indicator_code == nombre_hoja_problematica: 
+            print("\n" + "*"*20 + f" DEBUGGING PARA LA HOJA: '{indicator_code}' " + "*"*20)
+            df_debug = all_sheets_data[indicator_code]
+            
+            print("\n--- 1. Columnas Encontradas ---")
+            print(df_debug.columns)
+            
+            print("\n--- 2. Tipos de Datos (dtypes) de las Columnas (primeras 15) ---")
+            print(df_debug.dtypes.head(15))
+
+            # Verificar específicamente la columna del año que estás analizando
+            year_to_check = str(target_year) # Pandas a menudo lee los años como texto
+            
+            if year_to_check in df_debug.columns:
+                print(f"\n--- 3. Muestra de la Columna '{year_to_check}' ---")
+                print(df_debug[year_to_check].head(10))
+                print(f"Tipo de dato específico de la columna '{year_to_check}': {df_debug[year_to_check].dtype}")
+            else:
+                 print(f"\n¡¡¡ERROR DE DEBUG: La columna para el año {target_year} NO SE ENCONTRÓ en esta hoja!!!")
+            print("*"*60 + "\n")
+        # --- FIN DEL BLOQUE DE DEBUGGING --
+
         if indicator_code not in all_sheets_data:
             print(f"Advertencia: Indicador '{indicator_code}' no encontrado en los datos cargados. Se omitirá.")
             continue
@@ -389,7 +416,7 @@ def preparar_datos_corte_transversal(all_sheets_data, selected_indicators_codes,
 # --- Bloque de prueba ---
 if __name__ == '__main__':
     print("--- Ejecutando pruebas para data_loader_module.py ---")
-    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\SOCIOECONOMICOS_V2.xlsx"
+    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\INDICADORES WDI_V8_vf.xlsm"
     
     # Llama directamente a las funciones definidas arriba en el módulo
     all_data_v1 = load_excel_file(test_file_path_v1)

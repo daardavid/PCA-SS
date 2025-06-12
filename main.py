@@ -15,33 +15,101 @@ pd.set_option('display.width', 1000)
 # --- DICCIONARIO DE MAPEO PARA NOMBRES DE INDICADORES ---
 MAPEO_INDICADORES = {
     # --- NUEVOS INDICADORES (donde el nombre de la hoja es el nombre descriptivo) ---
-    'Adjusted savings  education exp': 'Adjusted savings: education expenditure (% of GNI)',
-    'Compulsory education, duration': 'Compulsory education, duration (years)',
-    'Expenditure on tertiary educati': 'Expenditure on tertiary education (% of government expenditure on education)',
-    'GDP growth (annual %)': 'GDP growth (annual %)',
-    'GDP per capita growth (annual %': 'GDP per capita growth (annual %)',
-    'GDP per capita, PPP (constant 2': 'GDP per capita, PPP (constant 2021 international $)',
-    'Gov exp on educa (% of GDP)': 'Government expenditure on education, total (% of GDP)',
-    'Gov exp on educa (% of gov exp)': 'Government expenditure on education, total (% of government expenditure)',
-    'Poverty headc. ratio at $2.15': 'Poverty headcount ratio at $2.15 a day (2017 PPP) (% of population)',
-    'Poverty headc. ratio at $3.65': 'Poverty headcount ratio at $3.65 a day (2017 PPP) (% of population)',
-    'Poverty headc. ratio at $6.85': 'Poverty headcount ratio at $6.85 a day (2017 PPP) (% of population)',
-    'Poverty headcount ratio at nati': 'Poverty headcount ratio at national poverty lines (% of population)',
-    'Poverty headcount ratio at soci': 'Poverty headcount ratio at societal poverty line (% of population)',
-    'Prop. of pop pushed below $2.15': 'Proportion of population pushed below the $2.15 ($ 2017 PPP) poverty line by out-of-pocket health care expenditure (%)',
-    'Prop. of pop pushed below $3.65': 'Proportion of population pushed below the $3.65 ($ 2017 PPP) poverty line by out-of-pocket health care expenditure (%)',
-    'Prop. of pop. spendi more 25%': 'Proportion of population spending more than 25% of household consumption or income on out-of-pocket health care expenditure (%)',
-    'Prop. of time on unp. dom. fema': 'Proportion of time spent on unpaid domestic and care work, female (% of 24 hour day)',
-    'Prop. of time on unp. dom. male': 'Proportion of time spent on unpaid domestic and care work, male (% of 24 hour day)',
-    'Research and development expend': 'Research and development expenditure (% of GDP)',
-    'School enroll., tertiary, femal': 'School enrollment, tertiary, female (% gross)',
-    'School enroll., tertiary, male': 'School enrollment, tertiary, male (% gross)',
-    'Total debt service (% of GNI)': 'Total debt service (% of GNI)',
+    'Adjusted savings  education exp': 'GED%PIB',
+    'Compulsory education': 'EDOBLAÑ',
+    'Expenditure on tertiary educati': 'GEDTER%',
+    'GDP growth (annual %)': 'PIBCRE%',
+    'GDP per capita growth (annual %': 'PIB/HCRE%',
+    'GDP per capita, PPP (constant 2': 'PIB/HPPP21',
+    'Gov exp on educ % GDP': 'GGUBED%PIB',
+    'Gov exp on educa (% of gov exp)': 'GGUBED%GUB',
+    'Poverty headc. ratio at $2.15': 'POB2.15%POB',
+    'Poverty headc. ratio at $3.65': 'POB3.65%POB',
+    'Poverty headcount ratio at $6.8': 'POB6.85%POB',
+    'Poverty headcount ratio at nati': 'POBNAC%POB',
+    'Poverty headcount ratio at soci': 'POBSOC%POB',
+    'Prop. of pop. spendi more 25%': 'POB25%SAL',
+    'Prop. of time on unp. dom. fema': '%TIEDOMMUJ',
+    'Prop. of time on unp. dom. male': '%TIEDOMHOM',
+    'R&d expendi % GDP': 'IN&DES%PIB',
+    'School enroll, tertiy, fem': 'MAESCTERMUJ',
+    'Carbon intensity of GDP': 'INTCARPPP21',
+    'Intensidad carbon PPP 2015': 'INTCARPPP15',
+    'Energy intensity PPP GDP': 'INTENEPPP17',
+    'School enroll terti total': 'MATRBRTOT',
+    'Researchers in R&D (per million': 'INV/HAB'
     # Asegurarse que la CLAVE sea EXACTAMENTE el nombre de la hoja en el EXCEL :).
 }
 
+# MAPEO_INDICADORES = {
+#     # --- NUEVOS INDICADORES (donde el nombre de la hoja es el nombre descriptivo) ---
+#     'Adjusted savings  education exp': 'Ahorro ajustado: gasto en educación (% del PIB)',
+#     'Compulsory education, duration': 'Educación obligatoria, duración (años)',
+#     'Expenditure on tertiary educati': 'Gasto en educación terciaria (% del gasto gubernamental en educación)',
+#     'GDP growth (annual %)': 'Crecimiento del PIB (% anual)',
+#     'GDP per capita growth (annual %': 'Crecimiento del PIB per cápita (% anual)',
+#     'GDP per capita, PPP (constant 2': 'PIB per cápita, PPA ($ constantes internacionales de 2021)',
+#     'Gov exp on educa (% of GDP)': 'Gasto gubernamental en educación, total (% del PIB)',
+#     'Gov exp on educa (% of gov exp)': 'Gasto gubernamental en educación, total (% del gasto gubernamental)',
+#     'Poverty headc. ratio at $2.15': 'Tasa de incidencia de la pobreza a $2.15 por día (PPA 2017) (% de la población)',
+#     'Poverty headc. ratio at $3.65': 'Tasa de incidencia de la pobreza a $3.65 por día (PPA 2017) (% de la población)',
+#     'Poverty headc. ratio at $6.85': 'Tasa de incidencia de la pobreza a $6.85 por día (PPA 2017) (% de la población)',
+#     'Poverty headcount ratio at nati': 'Tasa de incidencia de la pobreza según las líneas de pobreza nacionales (% de la población)',
+#     'Poverty headcount ratio at soci': 'Tasa de incidencia de la pobreza según la línea de pobreza social (% de la población)',
+#     'Prop. of pop. spendi more 25%': 'Proporción de la población que gasta más del 25% del consumo o ingreso del hogar en gastos de salud directos (%)',
+#     'Prop. of time on unp. dom. fema': 'Proporción del tiempo dedicado al trabajo doméstico y de cuidados no remunerado, mujeres (% de un día de 24 horas)',
+#     'Prop. of time on unp. dom. male': 'Proporción del tiempo dedicado al trabajo doméstico y de cuidados no remunerado, hombres (% de un día de 24 horas)',
+#     'Research and development expend': 'Gasto en investigación y desarrollo (% del PIB)',
+#     'School enroll., tertiary, femal': 'Matriculación escolar, terciaria, mujeres (% bruto)',
+#     'School enroll., tertiary, male': 'Matriculación escolar, terciaria, hombres (% bruto)',
+#     'Intensidad carbon PPP 2021': 'Intensidad de carbono PPA 2021',
+#     'Intensidad carbon PPP 2015': 'Intensidad de carbono PPA 2015',
+#     'Intensidad energia 2017 PPP ': 'Intensidad de energía PPA 2017',   
+#     'gross enrolmet total ': 'Matriculación bruta, total',
+#     'Investigador por habitante': 'Investigador por habitante'
+# }
+
+
+# --- DICCIONARIO DE GRUPOS DE PAÍSES ---
+COUNTRY_GROUPS = {
+    # Neoliberales Avanzados
+    'Australia': 'Neoliberales Avanzados', 'Belgium': 'Neoliberales Avanzados', 'Canada': 'Neoliberales Avanzados',
+    'Czechia': 'Neoliberales Avanzados', 'France': 'Neoliberales Avanzados', 'Germany': 'Neoliberales Avanzados',
+    'Luxembourg': 'Neoliberales Avanzados', 'Netherlands': 'Neoliberales Avanzados', 'Spain': 'Neoliberales Avanzados',
+    'Switzerland': 'Neoliberales Avanzados', 'United Kingdom': 'Neoliberales Avanzados', 'United States': 'Neoliberales Avanzados',
+    'New Zealand': 'Neoliberales Avanzados', 'Austria': 'Neoliberales Avanzados',
+
+    # Neoliberales tardíos
+    'Greece': 'Neoliberales tardíos', 'Hungary': 'Neoliberales tardíos', 'Ireland': 'Neoliberales tardíos',
+    'Latvia': 'Neoliberales tardíos', 'Mexico': 'Neoliberales tardíos', 'Poland': 'Neoliberales tardíos',
+    'Portugal': 'Neoliberales tardíos', 'Slovak Republic': 'Neoliberales tardíos', 'Slovenia': 'Neoliberales tardíos',
+    'Turkiye': 'Neoliberales tardíos', 'Chile': 'Neoliberales tardíos', 'Estonia': 'Neoliberales tardíos',
+    'Croatia': 'Neoliberales tardíos',
+
+    # Escandinavos
+    'Finland': 'Escandinavos', 'Denmark': 'Escandinavos', 'Norway': 'Escandinavos', 'Sweden': 'Escandinavos',
+    'Iceland': 'Escandinavos',
+
+    # Asiáticos
+    'China': 'Asiáticos', 'India': 'Asiáticos', 'Indonesia': 'Asiáticos', 'Japan': 'Asiáticos',
+    'Korea, Rep.': 'Asiáticos', 'Singapore': 'Asiáticos', 'Malaysia': 'Asiáticos', 'Thailand': 'Asiáticos',
+    
+    # Otros (Latinoamérica, etc.) - puedes crear más grupos si quieres
+    'Argentina': 'Otros', 'Brazil': 'Otros', 'Colombia': 'Otros', 'Costa Rica': 'Otros',
+    'Ecuador': 'Otros', 'Peru': 'Otros', 'Uruguay': 'Otros', 'Viet Nam': 'Otros'
+}
+
+# --- DICCIONARIO DE COLORES PARA LOS GRUPOS ---
+GROUP_COLORS = {
+    'Neoliberales Avanzados': 'blue',
+    'Neoliberales tardíos': 'green',
+    'Escandinavos': 'purple',
+    'Asiáticos': 'orange',
+}
+
+
 # --- CONFIGURACIÓN ---
-FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\INDICADORES WDI_V6_vf.xlsm")
+FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V3.xlsx")
 OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
 
 
@@ -278,189 +346,6 @@ if __name__ == "__main__":
         print("\n   El DataFrame estandarizado contiene NaNs. No se puede realizar PCA ni calcular covarianza.")
 
 
-# 9. ANÁLISIS DE CORTE TRANSVERSAL CON BIPLOTS -----
-    if input("\n¿Deseas realizar un análisis de corte transversal con Biplots? (s/n): ").strip().lower() == 's':
-        
-        while True: # Bucle para permitir reintentar la selección de países/años/indicadores
-            print("\n--- Configuración del Análisis de Corte Transversal ---")
-            
-            # 1. Seleccionar Indicadores para el corte transversal
-            print("\nSelección de Indicadores para el Análisis de Corte Transversal:")
-            print("Indicadores disponibles en el archivo:")
-            for i, name in enumerate(available_sheet_names_list):
-                print(f"  {i+1}. {MAPEO_INDICADORES.get(name, name)}")
-            
-            selection_str_cs = input("Ingresa los números de los indicadores para el corte transversal, separados por coma (ej. 1,3) o 'TODOS': ").strip()
-            indicators_for_cross_section_codes = []
-            if selection_str_cs.lower() == 'todos':
-                indicators_for_cross_section_codes = available_sheet_names_list
-            elif selection_str_cs:
-                try:
-                    selected_indices_cs = [int(idx.strip()) - 1 for idx in selection_str_cs.split(',')]
-                    for i_idx in selected_indices_cs: # Renombrada la variable del bucle
-                        if 0 <= i_idx < len(available_sheet_names_list):
-                            indicators_for_cross_section_codes.append(available_sheet_names_list[i_idx])
-                        else:
-                            print(f"Advertencia: Índice de indicador {i_idx+1} fuera de rango.")
-                except ValueError:
-                    print("Entrada de indicadores inválida.")
-
-            if not indicators_for_cross_section_codes:
-                print("No se seleccionaron indicadores válidos para el análisis de corte transversal.")
-                retry_choice = input("¿Deseas intentar otra selección de indicadores o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
-                if retry_choice == 'n':
-                    break # Salir del bucle while y de la sección de corte transversal
-                else:
-                    continue # Volver al inicio del bucle while para reintentar
-
-            print(f"Se usarán los siguientes indicadores para el corte transversal: {', '.join([MAPEO_INDICADORES.get(n,n) for n in indicators_for_cross_section_codes])}")
-
-            # 2. Seleccionar Países
-            all_possible_countries = set()
-            if all_sheets_data:
-                first_indicator_df = next(iter(all_sheets_data.values()))
-                if 'Unnamed: 0' in first_indicator_df.columns:
-                     all_possible_countries.update(first_indicator_df['Unnamed: 0'].dropna().unique())
-            
-            if not all_possible_countries:
-                print("No se pudieron obtener nombres de países para la selección.")
-                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
-                if retry_choice == 'n':
-                    break 
-                else:
-                    continue
-
-            sorted_countries = sorted(list(all_possible_countries))
-            print("\nPaíses disponibles:")
-            for i, country_name in enumerate(sorted_countries): # 'i' se reutiliza aquí, es local al bucle
-                print(f"  {i+1}. {country_name}")
-            
-            country_indices_str = input("Ingresa los números de los países a incluir, separados por coma (ej. 1,5,10) o 'TODOS': ").strip()
-            selected_countries_for_cross = []
-            if country_indices_str.lower() == 'todos':
-                selected_countries_for_cross = sorted_countries
-            elif country_indices_str:
-                try:
-                    selected_country_indices = [int(idx.strip()) - 1 for idx in country_indices_str.split(',')]
-                    for i_country in selected_country_indices: # Renombrada la variable del bucle
-                        if 0 <= i_country < len(sorted_countries):
-                            selected_countries_for_cross.append(sorted_countries[i_country])
-                        else:
-                            print(f"Advertencia: Índice de país {i_country+1} fuera de rango.")
-                except ValueError:
-                    print("Entrada de países inválida.")
-            
-            if not selected_countries_for_cross:
-                print("No se seleccionaron países válidos para el análisis de corte transversal.")
-                retry_choice = input("No se pudieron seleccionar países. ¿Deseas intentar otra selección o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
-                if retry_choice == 'n':
-                    break 
-                else:
-                    continue 
-
-            # 3. Seleccionar Año(s)
-            year_str = input("Ingresa el año (o años separados por coma, ej. 2010,2015,2020) para el análisis de corte transversal: ").strip()
-            if not year_str:
-                print("No se ingresaron años.")
-                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
-                if retry_choice == 'n':
-                    break
-                else:
-                    continue
-            
-            target_years_str = [y.strip() for y in year_str.split(',')]
-            target_years = []
-            for y_s in target_years_str:
-                try:
-                    target_years.append(int(y_s))
-                except ValueError:
-                    print(f"Advertencia: Año '{y_s}' no es un número válido y será ignorado.")
-            
-            if not target_years:
-                print("No se ingresaron años válidos para procesar.")
-                retry_choice = input("¿Deseas reintentar la configuración o salir? (s/n): ").strip().lower()
-                if retry_choice == 'n':
-                    break
-                else:
-                    continue
-            
-            # Variable para rastrear si al menos un año tuvo éxito
-            at_least_one_year_successful = False
-
-            for year_to_analyze in target_years:
-                print(f"\n--- Procesando año: {year_to_analyze} ---")
-                df_year_cross_section = dl.preparar_datos_corte_transversal(
-                    all_sheets_data, 
-                    indicators_for_cross_section_codes, 
-                    selected_countries_for_cross, 
-                    year_to_analyze,
-                    col_paises_nombre_original='Unnamed: 0'
-                )
-
-                if df_year_cross_section.empty or df_year_cross_section.isnull().all().all():
-                    print(f"No hay datos suficientes para el análisis de PCA para el año {year_to_analyze}.")
-                    continue # Pasar al siguiente año
-                
-                print(f"Datos para PCA ({year_to_analyze}) ANTES de eliminar NaNs de países: {df_year_cross_section.shape[0]} países.")
-                df_year_cross_section_no_na = df_year_cross_section.dropna(axis=0, how='any')
-                print(f"Datos para PCA ({year_to_analyze}) DESPUÉS de eliminar NaNs: {df_year_cross_section_no_na.shape[0]} países.")
-
-                if df_year_cross_section_no_na.shape[0] < 2 or df_year_cross_section_no_na.shape[1] < 2 :
-                    print(f"No hay suficientes datos (países/indicadores) después de eliminar NaNs para PCA en el año {year_to_analyze}.")
-                    # No preguntamos reintentar aquí, simplemente informamos y pasamos al siguiente año
-                    continue 
-                
-                # Si llegamos aquí, tenemos datos suficientes para este año
-                at_least_one_year_successful = True
-
-                df_year_estandarizado, _ = dl_prep.estandarizar_datos(df_year_cross_section_no_na)
-
-                if df_year_estandarizado.empty:
-                    print(f"El DataFrame estandarizado para {year_to_analyze} está vacío. No se puede realizar PCA.")
-                    continue
-                
-                print(f"\nRealizando PCA para el año {year_to_analyze}...")
-                pca_model_cs, df_pc_scores_cs = pca_mod.realizar_pca(df_year_estandarizado, n_components=2)
-
-                if pca_model_cs and not df_pc_scores_cs.empty:
-                    nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
-                    dl_viz.graficar_biplot_corte_transversal(
-                        pca_model_cs,
-                        df_pc_scores_cs,
-                        df_year_estandarizado.columns.tolist(),
-                        nombres_indicadores_mapeados_cs,
-                        df_pc_scores_cs.index.tolist(),
-                        titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores"
-                    )
-                else:
-                    print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
-            
-            # Después de procesar todos los años solicitados
-            if not at_least_one_year_successful and target_years: # Si se intentaron años pero ninguno tuvo éxito
-                print("\nNo se pudo completar el análisis para ninguno de los años y selecciones especificadas debido a datos insuficientes.")
-                retry_choice_final = input("¿Deseas intentar otra configuración de corte transversal o salir de esta sección? (s para reintentar, n para salir): ").strip().lower()
-                if retry_choice_final == 'n':
-                    break # Salir del bucle while
-                # Si es 's', el bucle while continuará automáticamente
-            elif at_least_one_year_successful: # Si al menos un año fue exitoso, salimos del bucle de reintento.
-                print("\nAnálisis de corte transversal completado para los años con datos suficientes.")
-                break # Salir del bucle while
-            else: # No se ingresaron años o no se seleccionaron indicadores/países válidos antes.
-                  # El bucle while ya debería haber ofrecido reintentar o haber salido.
-                  # Si llegamos aquí sin 'at_least_one_year_successful' y sin 'target_years', es un caso que
-                  # debería ser manejado por los 'continue' o 'break' anteriores.
-                  # Por si acaso, ofrecemos una salida.
-                if not target_years: # Si la lista de años a procesar quedó vacía
-                    retry_choice_final = input("No se especificaron años válidos. ¿Deseas intentar otra configuración o salir? (s/n): ").strip().lower()
-                    if retry_choice_final == 'n':
-                        break
-                    # else: el bucle while continuará
-            # Si no se entra a ningún 'if' de reintento/salida aquí, el bucle while continuará.
-            # Si un año fue exitoso, el 'break' anterior nos saca.
-            # Si no hubo años exitosos, también se ofrece reintentar o salir.
-            # Si el usuario no selecciona nada en los inputs iniciales, también se ofrece reintentar/salir.
-
-
     # ----- MODIFICADO: 10. VISUALIZACIÓN DE DATOS EN DIFERENTES ETAPAS -----
     print("\n\n--- 10. Visualizando Datos ---")
     if input("¿Deseas graficar las series de tiempo (Original, Imputado, Estandarizado, Componentes PCA)? (s/n): ").strip().lower() == 's':
@@ -576,6 +461,195 @@ if __name__ == "__main__":
             # Considera añadir un traceback aquí si los errores son frecuentes o difíciles de diagnosticar
             # import traceback
             # traceback.print_exc()
+
+            print("\n" + "="*80)
+
+    if input("\n¿Deseas realizar un análisis de corte transversal con Biplots? (s/n): ").strip().lower() == 's':
+        
+        while True: # Bucle principal para permitir reintentar toda la configuración
+            print("\n--- Configuración del Análisis de Corte Transversal ---")
+            
+            # --- 1. SELECCIONAR INDICADORES ---
+            print("\nSelección de Indicadores para el Análisis:")
+            for i, name in enumerate(available_sheet_names_list):
+                print(f"  {i+1}. {MAPEO_INDICADORES.get(name, name)}")
+            selection_str_cs = input("Ingresa los números de los indicadores (ej. 1,3) o 'TODOS': ").strip()
+            
+            indicators_for_cross_section_codes = []
+            if selection_str_cs.lower() == 'todos':
+                indicators_for_cross_section_codes = available_sheet_names_list
+            elif selection_str_cs:
+                try:
+                    selected_indices_cs = [int(idx.strip()) - 1 for idx in selection_str_cs.split(',')]
+                    for i_idx in selected_indices_cs:
+                        if 0 <= i_idx < len(available_sheet_names_list):
+                            indicators_for_cross_section_codes.append(available_sheet_names_list[i_idx])
+                        else:
+                            print(f"Advertencia: Índice de indicador {i_idx+1} fuera de rango, será ignorado.")
+                except ValueError:
+                    print("Error: Entrada de indicadores inválida.")
+            
+            if not indicators_for_cross_section_codes:
+                print("No se seleccionaron indicadores válidos.")
+                if input("¿Reintentar configuración? (s/n): ").strip().lower() != 's': break
+                else: continue
+
+            # --- 2. SELECCIONAR PAÍSES ---
+            all_possible_countries = set()
+            if all_sheets_data:
+                try:
+                    first_df = next(iter(all_sheets_data.values()))
+                    if 'Unnamed: 0' in first_df.columns:
+                        all_possible_countries.update(first_df['Unnamed: 0'].dropna().unique())
+                except StopIteration:
+                    pass
+            sorted_countries = sorted(list(all_possible_countries))
+            
+            if not sorted_countries:
+                print("No se pudieron obtener nombres de países del archivo de datos.")
+                if input("¿Reintentar configuración? (s/n): ").strip().lower() != 's': break
+                else: continue
+            
+            print("\nPaíses disponibles:")
+            for i, country_name in enumerate(sorted_countries):
+                print(f"  {i+1}. {country_name}")
+            country_indices_str = input("Ingresa los números de los países (ej. 1,5) o 'TODOS': ").strip()
+            selected_countries_for_cross = []
+            if country_indices_str.lower() == 'todos':
+                selected_countries_for_cross = sorted_countries
+            elif country_indices_str:
+                 try:
+                    selected_country_indices = [int(idx.strip()) - 1 for idx in country_indices_str.split(',')]
+                    for i_country in selected_country_indices:
+                        if 0 <= i_country < len(sorted_countries):
+                            selected_countries_for_cross.append(sorted_countries[i_country])
+                        else:
+                            print(f"Advertencia: Índice de país {i_country+1} fuera de rango, será ignorado.")
+                 except ValueError:
+                    print("Error: Entrada de países inválida.")
+
+            if not selected_countries_for_cross:
+                print("No se seleccionaron países válidos.")
+                if input("¿Reintentar configuración? (s/n): ").strip().lower() != 's': break
+                else: continue
+
+            # --- 3. SELECCIONAR AÑO(S) ---
+            year_str = input("Ingresa el año (o años separados por coma, ej. 2010,2015): ").strip()
+            target_years = []
+            if year_str:
+                try:
+                    target_years = [int(y.strip()) for y in year_str.split(',')]
+                except ValueError:
+                    print("Error: Entrada de año(s) inválida.")
+
+            if not target_years:
+                print("No se ingresaron años válidos.")
+                if input("¿Reintentar configuración? (s/n): ").strip().lower() != 's': break
+                else: continue
+
+            # --- INICIO DEL PROCESAMIENTO POR AÑO ---
+            sheets_to_save_cs = {}
+            at_least_one_year_successful = False
+
+            for year_to_analyze in target_years:
+                print(f"\n--- Procesando año: {year_to_analyze} ---")
+                
+                # Preparar datos
+                df_year_cross_section = dl.preparar_datos_corte_transversal(
+                    all_sheets_data, indicators_for_cross_section_codes, 
+                    selected_countries_for_cross, year_to_analyze
+                )
+                
+                if df_year_cross_section.empty or df_year_cross_section.isnull().all().all():
+                    print(f"No hay datos suficientes para el año {year_to_analyze}.")
+                    continue
+                
+                sheets_to_save_cs[f'Datos_{year_to_analyze}_Original'] = df_year_cross_section
+
+                # Manejar NaNs
+                df_year_processed = pd.DataFrame()
+                if df_year_cross_section.isnull().sum().sum() > 0:
+                    print(f"\nSe encontraron datos faltantes para el año {year_to_analyze}. ¿Cómo proceder?")
+                    print("  1. Eliminar países con cualquier dato faltante (método estricto).")
+                    print("  2. Imputar (rellenar) los datos faltantes.")
+                    choice_nan = input("Ingresa tu elección (1 o 2) [default: 1]: ").strip()
+                    
+                    if choice_nan == '2':
+                        impute_strategy_cs, params_cs = dl_prep.prompt_select_imputation_strategy()
+                        df_imputed_cs, _ = dl_prep.manejar_datos_faltantes(df_year_cross_section, estrategia=impute_strategy_cs, devolver_mascara=True, **params_cs)
+                        df_year_processed = df_imputed_cs.dropna(axis=0, how='any')
+                    else:
+                        df_year_processed = df_year_cross_section.dropna(axis=0, how='any')
+                else:
+                    df_year_processed = df_year_cross_section.copy()
+                
+                sheets_to_save_cs[f'Datos_{year_to_analyze}_Procesados'] = df_year_processed
+                print(f"Número de países para PCA ({year_to_analyze}): {df_year_processed.shape[0]}")
+                
+                if df_year_processed.shape[0] < 2 or df_year_processed.shape[1] < 2:
+                    print(f"Datos insuficientes después de procesar NaNs para PCA en el año {year_to_analyze}.")
+                    continue
+                
+                at_least_one_year_successful = True
+                
+                # Estandarizar y Realizar PCA
+                df_year_estandarizado, _ = dl_prep.estandarizar_datos(df_year_processed, devolver_scaler=True)
+                sheets_to_save_cs[f'Datos_{year_to_analyze}_Estandarizados'] = df_year_estandarizado
+                
+                pca_model_cs, df_pc_scores_cs = pca_mod.realizar_pca(df_year_estandarizado, n_components=2)
+                
+                # Generar Biplot y guardar resultados de PCA
+                if pca_model_cs and not df_pc_scores_cs.empty:
+                    sheets_to_save_cs[f'PCA_{year_to_analyze}_Scores'] = df_pc_scores_cs
+                    
+                    df_cargas_cs_temp = pca_mod.obtener_cargas_pca(pca_model_cs, df_year_estandarizado.columns.tolist())
+                    if df_cargas_cs_temp is not None:
+                        df_cargas_cs = df_cargas_cs_temp.copy()
+                        df_cargas_cs.index = [MAPEO_INDICADORES.get(code, code) for code in df_cargas_cs_temp.index]
+                        sheets_to_save_cs[f'PCA_{year_to_analyze}_Cargas'] = df_cargas_cs
+                    
+                    paises_en_plot = df_pc_scores_cs.index.tolist()
+                    grupos_para_plot = [COUNTRY_GROUPS.get(pais, 'Otros') for pais in paises_en_plot]
+                    nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
+                    
+                    dl_viz.graficar_biplot_corte_transversal(
+                        pca_model_cs, df_pc_scores_cs, df_year_estandarizado.columns.tolist(),
+                        nombres_indicadores_mapeados_cs, paises_en_plot,
+                        grupos_individuos=grupos_para_plot, mapa_de_colores=GROUP_COLORS,
+                        titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores"
+                    )
+                else:
+                    print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
+            
+            # --- FIN DEL BUCLE 'FOR YEAR' ---
+
+            # --- GUARDAR EN EXCEL PARA CORTE TRANSVERSAL ---
+            if at_least_one_year_successful:
+                if input("\n¿Deseas guardar los resultados de este análisis en un archivo Excel? (s/n): ").strip().lower() == 's':
+                    years_str = "_".join(map(str, target_years))
+                    excel_filename_cs = f"Reporte_Corte_Transversal_{years_str}.xlsx"
+                    full_excel_path_cs = OUTPUT_DIR / excel_filename_cs
+                    
+                    try:
+                        with pd.ExcelWriter(full_excel_path_cs) as writer:
+                            for sheet_name, df_to_save in sheets_to_save_cs.items():
+                                if not df_to_save.empty:
+                                    df_final_save = df_to_save.copy()
+                                    if 'Scores' not in sheet_name and 'Cargas' not in sheet_name and 'Varianza' not in sheet_name:
+                                        df_final_save.columns = [MAPEO_INDICADORES.get(col, col) for col in df_final_save.columns]
+                                    df_final_save.to_excel(writer, sheet_name=sheet_name, index=True)
+                        print(f"\nArchivo Excel guardado exitosamente en: {full_excel_path_cs}")
+                    except Exception as e_excel:
+                        print(f"   Error al intentar guardar el archivo Excel: {e_excel}")
+            
+            # --- LÓGICA FINAL DEL BUCLE WHILE ---
+            if not at_least_one_year_successful and target_years:
+                print("\nNo se pudo completar el análisis para ninguna de las selecciones.")
+                if input("¿Deseas intentar otra configuración? (s/n): ").strip().lower() != 's':
+                    break 
+            else:
+                print("\nAnálisis de corte transversal completado.")
+                break # Salir del bucle si al menos un año tuvo éxito o si el usuario no quiere reintentar
 
     print("\n---------------------------------------------")
     print("Fin de la ejecución de la Herramienta de Análisis.")
