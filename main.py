@@ -3,10 +3,11 @@ import data_loader_module as dl
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import os
+import matplotlib.pyplot as plt
 import preprocessing_module as dl_prep
 import visualization_module as dl_viz
 import pca_module as pca_mod
+
 
 # Mostrar todas las filas al imprimir DataFrames
 pd.set_option('display.max_rows', None)
@@ -15,102 +16,84 @@ pd.set_option('display.width', 1000)
 # --- DICCIONARIO DE MAPEO PARA NOMBRES DE INDICADORES ---
 MAPEO_INDICADORES = {
     # --- NUEVOS INDICADORES (donde el nombre de la hoja es el nombre descriptivo) ---
-    'Adjusted savings  education exp': 'GED%PIB',
     'Compulsory education': 'EDOBLAÑ',
-    'Expenditure on tertiary educati': 'GEDTER%',
     'GDP growth (annual %)': 'PIBCRE%',
     'GDP per capita growth (annual %': 'PIB/HCRE%',
     'GDP per capita, PPP (constant 2': 'PIB/HPPP21',
     'Gov exp on educ % GDP': 'GGUBED%PIB',
-    'Gov exp on educa (% of gov exp)': 'GGUBED%GUB',
-    'Poverty headc. ratio at $2.15': 'POB2.15%POB',
-    'Poverty headc. ratio at $3.65': 'POB3.65%POB',
     'Poverty headcount ratio at $6.8': 'POB6.85%POB',
-    'Poverty headcount ratio at nati': 'POBNAC%POB',
     'Poverty headcount ratio at soci': 'POBSOC%POB',
-    'Prop. of pop. spendi more 25%': 'POB25%SAL',
-    'Prop. of time on unp. dom. fema': '%TIEDOMMUJ',
-    'Prop. of time on unp. dom. male': '%TIEDOMHOM',
     'R&d expendi % GDP': 'IN&DES%PIB',
     'School enroll, tertiy, fem': 'MAESCTERMUJ',
     'Carbon intensity of GDP': 'INTCARPPP21',
-    'Intensidad carbon PPP 2015': 'INTCARPPP15',
     'Energy intensity PPP GDP': 'INTENEPPP17',
     'School enroll terti total': 'MATRBRTOT',
-    'Researchers in R&D (per million': 'INV/HAB'
+    'Researchers in R&D (per million': 'INV/HAB' 
     # Asegurarse que la CLAVE sea EXACTAMENTE el nombre de la hoja en el EXCEL :).
 }
-
-# MAPEO_INDICADORES = {
-#     # --- NUEVOS INDICADORES (donde el nombre de la hoja es el nombre descriptivo) ---
-#     'Adjusted savings  education exp': 'Ahorro ajustado: gasto en educación (% del PIB)',
-#     'Compulsory education, duration': 'Educación obligatoria, duración (años)',
-#     'Expenditure on tertiary educati': 'Gasto en educación terciaria (% del gasto gubernamental en educación)',
-#     'GDP growth (annual %)': 'Crecimiento del PIB (% anual)',
-#     'GDP per capita growth (annual %': 'Crecimiento del PIB per cápita (% anual)',
-#     'GDP per capita, PPP (constant 2': 'PIB per cápita, PPA ($ constantes internacionales de 2021)',
-#     'Gov exp on educa (% of GDP)': 'Gasto gubernamental en educación, total (% del PIB)',
-#     'Gov exp on educa (% of gov exp)': 'Gasto gubernamental en educación, total (% del gasto gubernamental)',
-#     'Poverty headc. ratio at $2.15': 'Tasa de incidencia de la pobreza a $2.15 por día (PPA 2017) (% de la población)',
-#     'Poverty headc. ratio at $3.65': 'Tasa de incidencia de la pobreza a $3.65 por día (PPA 2017) (% de la población)',
-#     'Poverty headc. ratio at $6.85': 'Tasa de incidencia de la pobreza a $6.85 por día (PPA 2017) (% de la población)',
-#     'Poverty headcount ratio at nati': 'Tasa de incidencia de la pobreza según las líneas de pobreza nacionales (% de la población)',
-#     'Poverty headcount ratio at soci': 'Tasa de incidencia de la pobreza según la línea de pobreza social (% de la población)',
-#     'Prop. of pop. spendi more 25%': 'Proporción de la población que gasta más del 25% del consumo o ingreso del hogar en gastos de salud directos (%)',
-#     'Prop. of time on unp. dom. fema': 'Proporción del tiempo dedicado al trabajo doméstico y de cuidados no remunerado, mujeres (% de un día de 24 horas)',
-#     'Prop. of time on unp. dom. male': 'Proporción del tiempo dedicado al trabajo doméstico y de cuidados no remunerado, hombres (% de un día de 24 horas)',
-#     'Research and development expend': 'Gasto en investigación y desarrollo (% del PIB)',
-#     'School enroll., tertiary, femal': 'Matriculación escolar, terciaria, mujeres (% bruto)',
-#     'School enroll., tertiary, male': 'Matriculación escolar, terciaria, hombres (% bruto)',
-#     'Intensidad carbon PPP 2021': 'Intensidad de carbono PPA 2021',
-#     'Intensidad carbon PPP 2015': 'Intensidad de carbono PPA 2015',
-#     'Intensidad energia 2017 PPP ': 'Intensidad de energía PPA 2017',   
-#     'gross enrolmet total ': 'Matriculación bruta, total',
-#     'Investigador por habitante': 'Investigador por habitante'
-# }
 
 
 # --- DICCIONARIO DE GRUPOS DE PAÍSES ---
 COUNTRY_GROUPS = {
     # Neoliberales Avanzados
-    'Australia': 'Neoliberales Avanzados', 'Belgium': 'Neoliberales Avanzados', 'Canada': 'Neoliberales Avanzados',
-    'Czechia': 'Neoliberales Avanzados', 'France': 'Neoliberales Avanzados', 'Germany': 'Neoliberales Avanzados',
-    'Luxembourg': 'Neoliberales Avanzados', 'Netherlands': 'Neoliberales Avanzados', 'Spain': 'Neoliberales Avanzados',
-    'Switzerland': 'Neoliberales Avanzados', 'United Kingdom': 'Neoliberales Avanzados', 'United States': 'Neoliberales Avanzados',
-    'New Zealand': 'Neoliberales Avanzados', 'Austria': 'Neoliberales Avanzados',
+    'AUS': 'Neoliberales Avanzados', 'BEL': 'Neoliberales Avanzados', 'CAN': 'Neoliberales Avanzados',
+    'CZE': 'Neoliberales Avanzados', 'FRA': 'Neoliberales Avanzados', 'DEU': 'Neoliberales Avanzados',
+    'LUX': 'Neoliberales Avanzados', 'NLD': 'Neoliberales Avanzados', 'ESP': 'Neoliberales Avanzados',
+    'CHE': 'Neoliberales Avanzados', 'GBR': 'Neoliberales Avanzados', 'USA': 'Neoliberales Avanzados',
+    'NZL': 'Neoliberales Avanzados', 'AUT': 'Neoliberales Avanzados', 'ITA': 'Neoliberales Avanzados',
 
     # Neoliberales tardíos
-    'Greece': 'Neoliberales tardíos', 'Hungary': 'Neoliberales tardíos', 'Ireland': 'Neoliberales tardíos',
-    'Latvia': 'Neoliberales tardíos', 'Mexico': 'Neoliberales tardíos', 'Poland': 'Neoliberales tardíos',
-    'Portugal': 'Neoliberales tardíos', 'Slovak Republic': 'Neoliberales tardíos', 'Slovenia': 'Neoliberales tardíos',
-    'Turkiye': 'Neoliberales tardíos', 'Chile': 'Neoliberales tardíos', 'Estonia': 'Neoliberales tardíos',
-    'Croatia': 'Neoliberales tardíos',
+    'GRC': 'Neoliberales tardíos', 'HUN': 'Neoliberales tardíos', 'IRL': 'Neoliberales tardíos',
+    'LVA': 'Neoliberales tardíos', 'MEX': 'Neoliberales tardíos', 'POL': 'Neoliberales tardíos',
+    'PRT': 'Neoliberales tardíos', 'SVK': 'Neoliberales tardíos', 'SVN': 'Neoliberales tardíos',
+    'TUR': 'Neoliberales tardíos', 'CHL': 'Neoliberales tardíos', 'EST': 'Neoliberales tardíos',
+    'HRV': 'Neoliberales tardíos','LTU': 'Neoliberales tardíos',
 
     # Escandinavos
-    'Finland': 'Escandinavos', 'Denmark': 'Escandinavos', 'Norway': 'Escandinavos', 'Sweden': 'Escandinavos',
-    'Iceland': 'Escandinavos',
+    'FIN': 'Escandinavos', 'DNK': 'Escandinavos', 'NOR': 'Escandinavos', 'SWE': 'Escandinavos',
+    'ISL': 'Escandinavos',
 
     # Asiáticos
-    'China': 'Asiáticos', 'India': 'Asiáticos', 'Indonesia': 'Asiáticos', 'Japan': 'Asiáticos',
-    'Korea, Rep.': 'Asiáticos', 'Singapore': 'Asiáticos', 'Malaysia': 'Asiáticos', 'Thailand': 'Asiáticos',
+    'CHN': 'Asiáticos', 'IND': 'Asiáticos', 'IDN': 'Asiáticos', 'JPN': 'Asiáticos',
+    'KOR': 'Asiáticos', 'SGP': 'Asiáticos', 'MYS': 'Asiáticos', 'THA': 'Asiáticos',
     
-    # Otros (Latinoamérica, etc.) - puedes crear más grupos si quieres
-    'Argentina': 'Otros', 'Brazil': 'Otros', 'Colombia': 'Otros', 'Costa Rica': 'Otros',
-    'Ecuador': 'Otros', 'Peru': 'Otros', 'Uruguay': 'Otros', 'Viet Nam': 'Otros'
+    # Otros (Latinoamérica, etc.)
+    'ARG': 'Otros', 'BRA': 'Otros', 'COL': 'Otros', 'CRI': 'Otros',
+    'ECU': 'Otros', 'PER': 'Otros', 'URY': 'Otros', 'VNM': 'Otros'
 }
 
-# --- DICCIONARIO DE COLORES PARA LOS GRUPOS ---
+# --- DICCIONARIO PARA MAPEAR CÓDIGOS A NOMBRES ---
+# Se usa para mostrar un menú amigable al usuario.
+CODE_TO_NAME = {
+    'ARG': 'Argentina', 'AUS': 'Australia', 'AUT': 'Austria', 'BEL': 'Belgium', 
+    'BRA': 'Brazil', 'CAN': 'Canada', 'CHE': 'Switzerland', 'CHL': 'Chile',
+    'CHN': 'China', 'COL': 'Colombia', 'CRI': 'Costa Rica', 'HRV': 'Croatia', 
+    'CZE': 'Czechia', 'DEU': 'Germany', 'DNK': 'Denmark', 'ECU': 'Ecuador',
+    'ESP': 'Spain', 'EST': 'Estonia', 'FIN': 'Finland', 'FRA': 'France', 
+    'GBR': 'United Kingdom', 'GRC': 'Greece', 'HUN': 'Hungary', 'IDN': 'Indonesia',
+    'IND': 'India', 'ITA': 'ITALIA', 'IRL': 'Ireland', 'ISL': 'Iceland', 'ITA': 'Italy', 'JPN': 'Japan',
+    'KOR': 'Korea, Rep.', 'LVA': 'Latvia', 'LUX': 'Luxembourg', 'MEX': 'Mexico',
+    'MYS': 'Malaysia', 'NLD': 'Netherlands', 'NOR': 'Norway', 'NZL': 'New Zealand',
+    'PER': 'Peru', 'POL': 'Poland', 'PRT': 'Portugal', 'SGP': 'Singapore', 
+    'SVK': 'Slovak Republic', 'SVN': 'Slovenia', 'SWE': 'Sweden', 'THA': 'Thailand',
+    'TUR': 'Turkiye', 'URY': 'Uruguay', 'USA': 'United States', 'VNM': 'Viet Nam', 'LTU': 'Lithuania'
+    # Agrega más códigos si es necesario
+}
+
+# --- DICCIONARIO DE COLORES PARA LOS GRUPOS (ESTÁ BIEN COMO LO TENÍAS) ---
 GROUP_COLORS = {
     'Neoliberales Avanzados': 'blue',
     'Neoliberales tardíos': 'green',
     'Escandinavos': 'purple',
     'Asiáticos': 'orange',
+    'Otros': 'gray'
 }
 
 
 # --- CONFIGURACIÓN ---
-FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V3.xlsx")
+FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V6.xlsx")
 OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
+PLOT_OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Scree Plots\Nuevos\VF\SVG")
 
 
 if __name__ == "__main__":
@@ -600,26 +583,36 @@ if __name__ == "__main__":
                 
                 # Generar Biplot y guardar resultados de PCA
                 if pca_model_cs and not df_pc_scores_cs.empty:
-                    sheets_to_save_cs[f'PCA_{year_to_analyze}_Scores'] = df_pc_scores_cs
-                    
-                    df_cargas_cs_temp = pca_mod.obtener_cargas_pca(pca_model_cs, df_year_estandarizado.columns.tolist())
-                    if df_cargas_cs_temp is not None:
-                        df_cargas_cs = df_cargas_cs_temp.copy()
-                        df_cargas_cs.index = [MAPEO_INDICADORES.get(code, code) for code in df_cargas_cs_temp.index]
-                        sheets_to_save_cs[f'PCA_{year_to_analyze}_Cargas'] = df_cargas_cs
-                    
-                    paises_en_plot = df_pc_scores_cs.index.tolist()
-                    grupos_para_plot = [COUNTRY_GROUPS.get(pais, 'Otros') for pais in paises_en_plot]
-                    nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
-                    
-                    dl_viz.graficar_biplot_corte_transversal(
-                        pca_model_cs, df_pc_scores_cs, df_year_estandarizado.columns.tolist(),
-                        nombres_indicadores_mapeados_cs, paises_en_plot,
-                        grupos_individuos=grupos_para_plot, mapa_de_colores=GROUP_COLORS,
-                        titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores"
-                    )
+                        # paises_en_plot ahora será una lista de CÓDIGOS (ej. ['AUS', 'DEU', 'JPN'])
+                        paises_en_plot = df_pc_scores_cs.index.tolist()
+                        
+                        # Traducir códigos a grupos
+                        grupos_para_plot = [COUNTRY_GROUPS.get(code, 'Otros') for code in paises_en_plot]
+                        
+                        # Los nombres de los indicadores se mapean a sus acrónimos o nombres deseados
+                        nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
+                        
+                        # ----- AQUÍ ESTÁ LA LÓGICA CORRECTA -----
+
+                        # 1. Definir un nombre de archivo y una ruta ANTES de llamar a la función.
+                        nombre_archivo_svg = f"Biplot_PCA_{year_to_analyze}.svg"
+                        ruta_completa_svg = PLOT_OUTPUT_DIR / nombre_archivo_svg
+                        
+                        # 2. Llamar a la función UNA SOLA VEZ, con todos los parámetros, incluyendo la ruta de guardado.
+                        dl_viz.graficar_biplot_corte_transversal(
+                            pca_model=pca_model_cs,
+                            df_pc_scores=df_pc_scores_cs,
+                            nombres_indicadores_originales=df_year_estandarizado.columns.tolist(),
+                            nombres_indicadores_etiquetas=nombres_indicadores_mapeados_cs,
+                            nombres_individuos_etiquetas=paises_en_plot,
+                            grupos_individuos=grupos_para_plot,
+                            mapa_de_colores=GROUP_COLORS,
+                            titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores",
+                            # ¡El parámetro clave que activa el guardado en formato SVG!
+                            ruta_guardado=ruta_completa_svg 
+                        )
                 else:
-                    print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
+                        print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
             
             # --- FIN DEL BUCLE 'FOR YEAR' ---
 
