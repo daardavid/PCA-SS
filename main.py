@@ -16,19 +16,19 @@ pd.set_option('display.width', 1000)
 # --- DICCIONARIO DE MAPEO PARA NOMBRES DE INDICADORES ---
 MAPEO_INDICADORES = {
     # --- NUEVOS INDICADORES (donde el nombre de la hoja es el nombre descriptivo) ---
-    'Compulsory education': 'EDOBLAÑ',
-    'GDP growth (annual %)': 'PIBCRE%',
-    'GDP per capita growth (annual %': 'PIB/HCRE%',
-    'GDP per capita, PPP (constant 2': 'PIB/HPPP21',
-    'Gov exp on educ % GDP': 'GGUBED%PIB',
-    'Poverty headcount ratio at $6.8': 'POB6.85%POB',
-    'Poverty headcount ratio at soci': 'POBSOC%POB',
-    'R&d expendi % GDP': 'IN&DES%PIB',
-    'School enroll, tertiy, fem': 'MAESCTERMUJ',
-    'Carbon intensity of GDP': 'INTCARPPP21',
-    'Energy intensity PPP GDP': 'INTENEPPP17',
-    'School enroll terti total': 'MATRBRTOT',
-    'Researchers in R&D (per million': 'INV/HAB' 
+    'Compulsory education': 'Ed_ob/Añ',
+    'GDP growth (annual %)': 'PIB_cr/%',
+    'GDP per capita growth (annual %': 'PIB_ca/%',
+    'GDP per capita, PPP (constant 2': 'PIB_ca/ppp21',
+    'Gov exp on educ % GDP': 'Go_Ed/%PIB',
+    'Poverty headcount ratio at $6.8': 'Po_$6.85/%T',
+    'Poverty headcount ratio at soci': 'Po_So/%T',
+    'R&d expendi % GDP': 'I&D/%PIB',
+    'School enroll, tertiy, fem': 'Ma_Tr_Mu/%T',
+    'Carbon intensity of GDP': 'In_CO2/ppp21',
+    'Energy intensity PPP GDP': 'In_En/ppp17',
+    'School enroll terti total': 'Ma_Tr/%T',
+    'Researchers in R&D (per million': 'Inv_I&D/Hab' 
     # Asegurarse que la CLAVE sea EXACTAMENTE el nombre de la hoja en el EXCEL :).
 }
 
@@ -92,7 +92,7 @@ GROUP_COLORS = {
 
 # --- CONFIGURACIÓN ---
 FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V6.xlsx")
-OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
+EXCEL_OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
 PLOT_OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Scree Plots\Nuevos\VF\SVG")
 
 
@@ -102,12 +102,13 @@ if __name__ == "__main__":
 
     # Crear el directorio de salida si no existe
     try:
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        EXCEL_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        
     except Exception as e_dir:
-        print(f"ADVERTENCIA: No se pudo crear el directorio de salida: {OUTPUT_DIR}")
+        print(f"ADVERTENCIA: No se pudo crear el directorio de salida: {EXCEL_OUTPUT_DIR}")
         print(f"           Error: {e_dir}")
         print("           Los archivos Excel se guardarán en el directorio actual del script si procede.")
-        OUTPUT_DIR = Path(".")
+        EXCEL_OUTPUT_DIR = Path(".")
 
     # 1. Cargar todas las hojas
     all_sheets_data = dl.load_excel_file(FILE_PATH)
@@ -368,7 +369,7 @@ if __name__ == "__main__":
         try:
             # Nombre del archivo Excel
             excel_filename = f"Reporte_Procesado_PCA_{country_to_analyze}_{nombre_estrategia_elegida if nombre_estrategia_elegida else 'SinImputar'}.xlsx"
-            full_excel_path = OUTPUT_DIR / excel_filename
+            full_excel_path = EXCEL_OUTPUT_DIR / excel_filename
             
             saved_sheets_list = [] # Para llevar un registro de las hojas guardadas
 
@@ -579,6 +580,11 @@ if __name__ == "__main__":
                 df_year_estandarizado, _ = dl_prep.estandarizar_datos(df_year_processed, devolver_scaler=True)
                 sheets_to_save_cs[f'Datos_{year_to_analyze}_Estandarizados'] = df_year_estandarizado
                 
+                # --- NUEVO: Calcular y recolectar la matriz de covarianza para este año ---
+                if not df_year_estandarizado.empty:
+                    df_cov_cs = df_year_estandarizado.cov()
+                    sheets_to_save_cs[f'Matriz_Covarianza_{year_to_analyze}'] = df_cov_cs
+                
                 pca_model_cs, df_pc_scores_cs = pca_mod.realizar_pca(df_year_estandarizado, n_components=2)
                 
                 # Generar Biplot y guardar resultados de PCA
@@ -611,9 +617,39 @@ if __name__ == "__main__":
                             # ¡El parámetro clave que activa el guardado en formato SVG!
                             ruta_guardado=ruta_completa_svg 
                         )
+
+                                            # Guardar los scores de los países en el diccionario
+                        sheets_to_save_cs[f'Scores_PCA_{year_to_analyze}'] = df_pc_scores_cs
+
+                        # 2. Calcular y guardar las cargas de las variables en el diccionario
+                        try:
+                            nombres_indicadores = df_year_estandarizado.columns.tolist()
+                            componentes = pca_model_cs.components_
+                            
+                            df_cargas_cs = pd.DataFrame(
+                                componentes.T,  # Transponer para que las variables sean filas
+                                columns=[f'PC{i+1}' for i in range(componentes.shape[0])],
+                                index=nombres_indicadores
+                            )
+                            sheets_to_save_cs[f'Cargas_PCA_{year_to_analyze}'] = df_cargas_cs
+                        except Exception as e_cargas:
+                            print(f"Advertencia: No se pudieron calcular/guardar las cargas para {year_to_analyze}: {e_cargas}")
+
+                        try:
+                            # Los valores propios están en el atributo explained_variance_
+                            df_eigenvalues = pd.DataFrame(
+                                pca_model_cs.explained_variance_,
+                                index=[f'PC{i+1}' for i in range(len(pca_model_cs.explained_variance_))],
+                                columns=['Eigenvalue (Varianza Explicada)']
+                            )
+                            sheets_to_save_cs[f'Valores_Propios_{year_to_analyze}'] = df_eigenvalues
+                        except Exception as e_eigen:
+                            print(f"Advertencia: No se pudieron guardar los valores propios para {year_to_analyze}: {e_eigen}")
+                            
+
                 else:
                         print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
-            
+                                    
             # --- FIN DEL BUCLE 'FOR YEAR' ---
 
             # --- GUARDAR EN EXCEL PARA CORTE TRANSVERSAL ---
@@ -621,15 +657,26 @@ if __name__ == "__main__":
                 if input("\n¿Deseas guardar los resultados de este análisis en un archivo Excel? (s/n): ").strip().lower() == 's':
                     years_str = "_".join(map(str, target_years))
                     excel_filename_cs = f"Reporte_Corte_Transversal_{years_str}.xlsx"
-                    full_excel_path_cs = OUTPUT_DIR / excel_filename_cs
+                    full_excel_path_cs = EXCEL_OUTPUT_DIR / excel_filename_cs
                     
                     try:
                         with pd.ExcelWriter(full_excel_path_cs) as writer:
                             for sheet_name, df_to_save in sheets_to_save_cs.items():
                                 if not df_to_save.empty:
                                     df_final_save = df_to_save.copy()
-                                    if 'Scores' not in sheet_name and 'Cargas' not in sheet_name and 'Varianza' not in sheet_name:
+
+                                    # --- LÓGICA DE RENOMBRADO MEJORADA ---
+                                    if 'Matriz_Covarianza' in sheet_name:
+                                        # Para la matriz de covarianza, mapear tanto índice como columnas
+                                        df_final_save.index = [MAPEO_INDICADORES.get(idx, idx) for idx in df_final_save.index]
                                         df_final_save.columns = [MAPEO_INDICADORES.get(col, col) for col in df_final_save.columns]
+                                    elif 'Cargas' in sheet_name:
+                                        # Las cargas ya tienen el índice mapeado, no hacer nada.
+                                        pass
+                                    elif 'Scores' not in sheet_name and 'Varianza' not in sheet_name:
+                                        # Para los demás DataFrames de datos, mapear solo las columnas
+                                        df_final_save.columns = [MAPEO_INDICADORES.get(col, col) for col in df_final_save.columns]
+                                    
                                     df_final_save.to_excel(writer, sheet_name=sheet_name, index=True)
                         print(f"\nArchivo Excel guardado exitosamente en: {full_excel_path_cs}")
                     except Exception as e_excel:
