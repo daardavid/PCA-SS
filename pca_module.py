@@ -305,3 +305,44 @@ def prompt_seleccionar_n_componentes(max_components, suggested_n_comp_90=None, s
             print_module_pca(f"Se produjo un error inesperado durante la selección: {e}")
             print_module_pca(f"Se usarán todos los {max_components} componentes como fallback.")
             return max_components # Fallback en caso de error no previsto
+        
+def estandarizar_direccion_pca(pca_model, df_pc_scores, df_estandarizado, anchor_variable_code, component_to_check=0):
+    """
+    Verifica la dirección de un componente principal y lo invierte si es necesario para mantener la consistencia.
+    Se asegura de que una 'variable ancla' siempre tenga una carga positiva en el componente especificado.
+
+    Args:
+        pca_model: El objeto PCA ajustado de scikit-learn.
+        df_pc_scores (pd.DataFrame): DataFrame con los scores de los componentes.
+        df_estandarizado (pd.DataFrame): DataFrame que se usó para ajustar el PCA.
+        anchor_variable_code (str): El nombre/código de la columna de la variable ancla.
+        component_to_check (int): El índice del componente a verificar (0 para PC1, 1 para PC2, etc.).
+
+    Returns:
+        tuple: (pca_model, df_pc_scores) con la dirección potencialmente invertida.
+    """
+    try:
+        # Encontrar el índice de la columna de nuestra variable ancla
+        lista_columnas = df_estandarizado.columns.tolist()
+        anchor_variable_index = lista_columnas.index(anchor_variable_code)
+        
+        # Obtener la carga de la variable ancla en el componente a revisar
+        # pca_model.components_ tiene forma (n_components, n_features)
+        loading_value = pca_model.components_[component_to_check, anchor_variable_index]
+        
+        # Si el signo de la carga es negativo, la dirección está "al revés"
+        if loading_value < 0:
+            print(f"--- INFO: Invirtiendo la dirección de PC{component_to_check + 1} para consistencia (basado en '{anchor_variable_code}'). ---")
+            # Invertir el signo de las cargas para ese componente
+            pca_model.components_[component_to_check, :] *= -1
+            # Invertir el signo de los scores para ese componente
+            pc_name = f'PC{component_to_check + 1}'
+            if pc_name in df_pc_scores.columns:
+                df_pc_scores[pc_name] *= -1
+    
+    except ValueError:
+        print(f"Advertencia: La variable ancla '{anchor_variable_code}' no se encontró en las columnas. No se pudo estandarizar la dirección del PCA.")
+    except Exception as e:
+        print(f"Error al estandarizar la dirección del PCA: {e}")
+            
+    return pca_model, df_pc_scores

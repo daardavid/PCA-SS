@@ -1,7 +1,8 @@
 # data_loader_module.py
 import pandas as pd
-import numpy as np 
-import traceback   # Importación única al principio
+import numpy as np
+from functools import reduce 
+import traceback
 1
 def load_excel_file(file_path):
     # PRINT DE DEPURACIÓN INMEDIATO AL ENTRAR A LA FUNCIÓN
@@ -365,6 +366,76 @@ def preparar_datos_corte_transversal(all_sheets_data, selected_indicators_codes,
     print(f"DataFrame para el año {target_year} (primeras filas):")
     print(df_cross_section.head())
     return df_cross_section
+
+def preparar_datos_panel_longitudinal(all_sheets_data, selected_indicators_codes, selected_countries_codes, col_paises_nombre_original='Unnamed: 0'):
+    """
+    [CORREGIDA v2] Prepara un DataFrame en formato de panel (longitudinal).
+    Maneja la configuración del índice de forma robusta para evitar errores.
+    """
+    print("\n--- Preparando datos en formato de panel longitudinal ---")
+    
+    panel_data_list = []
+    
+    for indicator_code in selected_indicators_codes:
+        if indicator_code not in all_sheets_data:
+            print(f"Advertencia: Indicador '{indicator_code}' no encontrado. Se omitirá.")
+            continue
+        
+        df_indicator = all_sheets_data[indicator_code].copy()
+        
+        # --- LÓGICA CORREGIDA PARA MANEJAR EL ÍNDICE ---
+        # Primero, verificamos si la columna de países ('Unnamed: 0') ya es el índice.
+        if df_indicator.index.name == col_paises_nombre_original:
+            # Si lo es, lo convertimos de nuevo en una columna para poder usar 'melt' después.
+            df_indicator.reset_index(inplace=True)
+
+        # Ahora, verificamos si la columna de países existe.
+        # Si no existe en este punto, la hoja tiene un formato incorrecto y la omitimos.
+        if col_paises_nombre_original not in df_indicator.columns:
+            print(f"Advertencia: No se encontró la columna de países '{col_paises_nombre_original}' en el indicador '{indicator_code}'. Se omitirá.")
+            continue
+        # --- FIN DE LA LÓGICA CORREGIDA ---
+            
+        # Filtrar solo por los países seleccionados
+        df_indicator = df_indicator[df_indicator[col_paises_nombre_original].isin(selected_countries_codes)]
+        if df_indicator.empty:
+            # Esta advertencia es útil si un indicador no tiene datos para NINGUNO de los países seleccionados
+            # print(f"Advertencia: Ninguno de los países seleccionados se encontró en el indicador '{indicator_code}'.")
+            continue
+
+        # Usar pd.melt para convertir de formato ancho a largo
+        try:
+            df_melted = df_indicator.melt(
+                id_vars=[col_paises_nombre_original],
+                var_name='Año',
+                value_name=indicator_code
+            )
+            panel_data_list.append(df_melted)
+        except Exception as e_melt:
+            print(f"Error al transformar el indicador '{indicator_code}': {e_melt}")
+
+    if not panel_data_list:
+        print("No se pudo procesar ningún indicador en formato de panel.")
+        return pd.DataFrame()
+
+    # Unir todos los DataFrames de indicadores en uno solo
+    if len(panel_data_list) == 1:
+        df_panel_final = panel_data_list[0]
+    else:
+        df_panel_final = reduce(lambda left, right: pd.merge(left, right, on=[col_paises_nombre_original, 'Año'], how='outer'), panel_data_list)
+    
+    # Limpiar y ordenar
+    df_panel_final.rename(columns={col_paises_nombre_original: 'País'}, inplace=True)
+    df_panel_final['Año'] = pd.to_numeric(df_panel_final['Año'], errors='coerce')
+    df_panel_final.dropna(subset=['Año'], inplace=True)
+    df_panel_final['Año'] = df_panel_final['Año'].astype(int)
+    df_panel_final.sort_values(by=['País', 'Año'], inplace=True)
+    df_panel_final.set_index(['País', 'Año'], inplace=True)
+    
+    print("Datos de panel construidos (primeras filas):")
+    print(df_panel_final.head())
+    
+    return df_panel_final
 
 # --- Bloque de prueba ---
 if __name__ == '__main__':

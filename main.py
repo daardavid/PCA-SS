@@ -37,17 +37,17 @@ MAPEO_INDICADORES = {
 COUNTRY_GROUPS = {
     # Neoliberales Avanzados
     'AUS': 'Neoliberales Avanzados', 'BEL': 'Neoliberales Avanzados', 'CAN': 'Neoliberales Avanzados',
-    'CZE': 'Neoliberales Avanzados', 'FRA': 'Neoliberales Avanzados', 'DEU': 'Neoliberales Avanzados',
+    'FRA': 'Neoliberales Avanzados', 'DEU': 'Neoliberales Avanzados',
     'LUX': 'Neoliberales Avanzados', 'NLD': 'Neoliberales Avanzados', 'ESP': 'Neoliberales Avanzados',
     'CHE': 'Neoliberales Avanzados', 'GBR': 'Neoliberales Avanzados', 'USA': 'Neoliberales Avanzados',
     'NZL': 'Neoliberales Avanzados', 'AUT': 'Neoliberales Avanzados', 'ITA': 'Neoliberales Avanzados',
 
     # Neoliberales tardíos
-    'GRC': 'Neoliberales tardíos', 'HUN': 'Neoliberales tardíos', 'IRL': 'Neoliberales tardíos',
-    'LVA': 'Neoliberales tardíos', 'MEX': 'Neoliberales tardíos', 'POL': 'Neoliberales tardíos',
-    'PRT': 'Neoliberales tardíos', 'SVK': 'Neoliberales tardíos', 'SVN': 'Neoliberales tardíos',
-    'TUR': 'Neoliberales tardíos', 'CHL': 'Neoliberales tardíos', 'EST': 'Neoliberales tardíos',
-    'HRV': 'Neoliberales tardíos','LTU': 'Neoliberales tardíos',
+    'GRC': 'Neoliberales Tardíos', 'HUN': 'Neoliberales Tardíos', 'IRL': 'Neoliberales Tardíos',
+    'LVA': 'Neoliberales Tardíos', 'MEX': 'Neoliberales Tardíos', 'POL': 'Neoliberales Tardíos',
+    'PRT': 'Neoliberales Tardíos', 'SVK': 'Neoliberales Tardíos', 'SVN': 'Neoliberales Tardíos',
+    'TUR': 'Neoliberales Tardíos', 'CHL': 'Neoliberales Tardíos', 'EST': 'Neoliberales Tardíos',
+    'HRV': 'Neoliberales Tardíos', 'LTU': 'Neoliberales Tardíos', 'CZE': 'Neoliberales Tardíos',
 
     # Escandinavos
     'FIN': 'Escandinavos', 'DNK': 'Escandinavos', 'NOR': 'Escandinavos', 'SWE': 'Escandinavos',
@@ -55,11 +55,11 @@ COUNTRY_GROUPS = {
 
     # Asiáticos
     'CHN': 'Asiáticos', 'IND': 'Asiáticos', 'IDN': 'Asiáticos', 'JPN': 'Asiáticos',
-    'KOR': 'Asiáticos', 'SGP': 'Asiáticos', 'MYS': 'Asiáticos', 'THA': 'Asiáticos',
+    'KOR': 'Asiáticos', 'SGP': 'Asiáticos', 'MYS': 'Asiáticos', 'THA': 'Asiáticos', 'VNM': 'Asiáticos',
     
     # Otros (Latinoamérica, etc.)
     'ARG': 'Otros', 'BRA': 'Otros', 'COL': 'Otros', 'CRI': 'Otros',
-    'ECU': 'Otros', 'PER': 'Otros', 'URY': 'Otros', 'VNM': 'Otros'
+    'ECU': 'Otros', 'PER': 'Otros', 'URY': 'Otros'
 }
 
 # --- DICCIONARIO PARA MAPEAR CÓDIGOS A NOMBRES ---
@@ -76,14 +76,14 @@ CODE_TO_NAME = {
     'MYS': 'Malaysia', 'NLD': 'Netherlands', 'NOR': 'Norway', 'NZL': 'New Zealand',
     'PER': 'Peru', 'POL': 'Poland', 'PRT': 'Portugal', 'SGP': 'Singapore', 
     'SVK': 'Slovak Republic', 'SVN': 'Slovenia', 'SWE': 'Sweden', 'THA': 'Thailand',
-    'TUR': 'Turkiye', 'URY': 'Uruguay', 'USA': 'United States', 'VNM': 'Viet Nam', 'LTU': 'Lithuania'
+    'TUR': 'Turkiye', 'URY': 'Uruguay', 'USA': 'United States', 'VNM': 'Viet Nam', 'LTU': 'Lithuania', 'GBR': 'United Kingdom'
     # Agrega más códigos si es necesario
 }
 
 # --- DICCIONARIO DE COLORES PARA LOS GRUPOS (ESTÁ BIEN COMO LO TENÍAS) ---
 GROUP_COLORS = {
     'Neoliberales Avanzados': 'blue',
-    'Neoliberales tardíos': 'green',
+    'Neoliberales Tardíos': 'green',
     'Escandinavos': 'purple',
     'Asiáticos': 'orange',
     'Otros': 'gray'
@@ -91,13 +91,76 @@ GROUP_COLORS = {
 
 
 # --- CONFIGURACIÓN ---
-FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V6.xlsx")
+FILE_PATH = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Indc WDI_V7.xlsx")
 EXCEL_OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Excels guardados")
 PLOT_OUTPUT_DIR = Path(r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Scree Plots\Nuevos\VF\SVG")
 
+def select_indicators(available_sheet_names_list, mapeo_indicadores):
+    """Función auxiliar para que el usuario seleccione indicadores de una lista."""
+    print("\nSelección de Indicadores para el Análisis:")
+    for i, name in enumerate(available_sheet_names_list):
+        # Muestra el acrónimo si existe, si no, el nombre de la hoja
+        display_name = mapeo_indicadores.get(name, name)
+        print(f"  {i+1}. {display_name}")
+    
+    selection_str = input("Ingresa los números de los indicadores (ej. 1,3) o 'TODOS': ").strip()
+    selected_codes = []
+    if selection_str.lower() == 'todos':
+        selected_codes = available_sheet_names_list
+    elif selection_str:
+        try:
+            selected_indices = [int(idx.strip()) - 1 for idx in selection_str.split(',')]
+            for i in selected_indices:
+                if 0 <= i < len(available_sheet_names_list):
+                    selected_codes.append(available_sheet_names_list[i])
+                else:
+                    print(f"Advertencia: Índice de indicador {i+1} fuera de rango, será ignorado.")
+        except ValueError:
+            print("Error: Entrada de indicadores inválida.")
+    return selected_codes
+
+def select_countries(all_sheets_data, code_to_name_map):
+    """Función auxiliar para que el usuario seleccione países de una lista."""
+    all_possible_codes = set()
+    try:
+        # Extraer códigos de país de la primera hoja de datos
+        first_df = next(iter(all_sheets_data.values()))
+        if 'Unnamed: 0' in first_df.columns:
+            all_possible_codes.update(first_df['Unnamed: 0'].dropna().unique())
+    except StopIteration:
+        print("Advertencia: No se pudieron leer datos para extraer la lista de países.")
+        return []
+    
+    sorted_codes = sorted(list(all_possible_codes))
+    if not sorted_codes:
+        print("No se pudieron obtener códigos de países del archivo de datos.")
+        return []
+
+    print("\nPaíses disponibles:")
+    for i, code in enumerate(sorted_codes):
+        # Mostrar nombre completo y código para claridad
+        full_name = code_to_name_map.get(code, f"Código Desconocido: {code}")
+        print(f"  {i+1}. {full_name} ({code})")
+    
+    indices_str = input("Ingresa los números de los países (ej. 1,5) o 'TODOS': ").strip()
+    selected_codes = []
+    if indices_str.lower() == 'todos':
+        selected_codes = sorted_codes
+    elif indices_str:
+        try:
+            selected_indices = [int(idx.strip()) - 1 for idx in indices_str.split(',')]
+            for i in selected_indices:
+                if 0 <= i < len(sorted_codes):
+                    selected_codes.append(sorted_codes[i])
+                else:
+                    print(f"Advertencia: Índice de país {i+1} fuera de rango, será ignorado.")
+        except ValueError:
+            print("Error: Entrada de países inválida.")
+    return selected_codes
+
 
 if __name__ == "__main__":
-    print("Herramienta de Análisis de Datos y PCA v1.2.0") # MODIFICADO: Versión incrementada, lo estoy subiendo a Github
+    print("Herramienta de Análisis de Datos y PCA v1.3.0") # MODIFICADO: Versión incrementada, lo estoy subiendo a Github
     print("---------------------------------------------")
 
     # Crear el directorio de salida si no existe
@@ -587,68 +650,67 @@ if __name__ == "__main__":
                 
                 pca_model_cs, df_pc_scores_cs = pca_mod.realizar_pca(df_year_estandarizado, n_components=2)
                 
+
                 # Generar Biplot y guardar resultados de PCA
                 if pca_model_cs and not df_pc_scores_cs.empty:
-                        # paises_en_plot ahora será una lista de CÓDIGOS (ej. ['AUS', 'DEU', 'JPN'])
-                        paises_en_plot = df_pc_scores_cs.index.tolist()
-                        
-                        # Traducir códigos a grupos
-                        grupos_para_plot = [COUNTRY_GROUPS.get(code, 'Otros') for code in paises_en_plot]
-                        
-                        # Los nombres de los indicadores se mapean a sus acrónimos o nombres deseados
-                        nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
-                        
-                        # ----- AQUÍ ESTÁ LA LÓGICA CORRECTA -----
+                    
+                    # --- NUEVO: ESTANDARIZAR LA DIRECCIÓN DE LOS EJES DEL PCA ---
+                    # Hacemos una copia de los resultados originales antes de modificarlos
+                    pca_model_final = pca_model_cs
+                    df_scores_final = df_pc_scores_cs.copy()
 
-                        # 1. Definir un nombre de archivo y una ruta ANTES de llamar a la función.
-                        nombre_archivo_svg = f"Biplot_PCA_{year_to_analyze}.svg"
-                        ruta_completa_svg = PLOT_OUTPUT_DIR / nombre_archivo_svg
-                        
-                        # 2. Llamar a la función UNA SOLA VEZ, con todos los parámetros, incluyendo la ruta de guardado.
-                        dl_viz.graficar_biplot_corte_transversal(
-                            pca_model=pca_model_cs,
-                            df_pc_scores=df_pc_scores_cs,
-                            nombres_indicadores_originales=df_year_estandarizado.columns.tolist(),
-                            nombres_indicadores_etiquetas=nombres_indicadores_mapeados_cs,
-                            nombres_individuos_etiquetas=paises_en_plot,
-                            grupos_individuos=grupos_para_plot,
-                            mapa_de_colores=GROUP_COLORS,
-                            titulo=f"Biplot PCA para {year_to_analyze} - Países e Indicadores",
-                            # ¡El parámetro clave que activa el guardado en formato SVG!
-                            ruta_guardado=ruta_completa_svg 
+                    # Variable ancla. Debe ser uno de los indicadores que seleccionaste.
+                    variable_ancla_pc1 = 'Poverty headcount ratio at soci' 
+                    
+                    if variable_ancla_pc1 in df_year_estandarizado.columns:
+                        pca_model_final, df_scores_final = pca_mod.estandarizar_direccion_pca(
+                            pca_model=pca_model_final,
+                            df_pc_scores=df_scores_final,
+                            df_estandarizado=df_year_estandarizado,
+                            anchor_variable_code=variable_ancla_pc1,
+                            component_to_check=0  # Para estandarizar PC1
                         )
+                    else:
+                        print(f"\nAdvertencia: La variable ancla '{variable_ancla_pc1}' no fue seleccionada para el análisis.")
+                        print("           La orientación del biplot podría no ser consistente entre años.")
+                    # --- FIN DE LA NUEVA SECCIÓN ---
 
-                                            # Guardar los scores de los países en el diccionario
-                        sheets_to_save_cs[f'Scores_PCA_{year_to_analyze}'] = df_pc_scores_cs
 
-                        # 2. Calcular y guardar las cargas de las variables en el diccionario
-                        try:
-                            nombres_indicadores = df_year_estandarizado.columns.tolist()
-                            componentes = pca_model_cs.components_
-                            
-                            df_cargas_cs = pd.DataFrame(
-                                componentes.T,  # Transponer para que las variables sean filas
-                                columns=[f'PC{i+1}' for i in range(componentes.shape[0])],
-                                index=nombres_indicadores
-                            )
-                            sheets_to_save_cs[f'Cargas_PCA_{year_to_analyze}'] = df_cargas_cs
-                        except Exception as e_cargas:
-                            print(f"Advertencia: No se pudieron calcular/guardar las cargas para {year_to_analyze}: {e_cargas}")
+                    # Guardar los scores (posiblemente ya modificados) en el diccionario
+                    sheets_to_save_cs[f'PCA_{year_to_analyze}_Scores'] = df_scores_final
 
-                        try:
-                            # Los valores propios están en el atributo explained_variance_
-                            df_eigenvalues = pd.DataFrame(
-                                pca_model_cs.explained_variance_,
-                                index=[f'PC{i+1}' for i in range(len(pca_model_cs.explained_variance_))],
-                                columns=['Eigenvalue (Varianza Explicada)']
-                            )
-                            sheets_to_save_cs[f'Valores_Propios_{year_to_analyze}'] = df_eigenvalues
-                        except Exception as e_eigen:
-                            print(f"Advertencia: No se pudieron guardar los valores propios para {year_to_analyze}: {e_eigen}")
-                            
+                    # Calcular y guardar las cargas (usando el modelo posiblemente modificado)
+                    df_cargas_cs_temp = pca_mod.obtener_cargas_pca(pca_model_final, df_year_estandarizado.columns.tolist())
+                    if df_cargas_cs_temp is not None:
+                        df_cargas_cs = df_cargas_cs_temp.copy()
+                        df_cargas_cs.index = [MAPEO_INDICADORES.get(code, code) for code in df_cargas_cs_temp.index]
+                        sheets_to_save_cs[f'PCA_{year_to_analyze}_Cargas'] = df_cargas_cs
 
+                    # Preguntar si se desea guardar el gráfico
+                    ruta_para_guardar_svg = None
+                    if input(f"\n¿Deseas guardar el biplot para {year_to_analyze} como archivo SVG editable? (s/n): ").strip().lower() == 's':
+                        nombre_archivo_svg = f"Biplot_PCA_{year_to_analyze}.svg"
+                        ruta_para_guardar_svg = PLOT_OUTPUT_DIR / nombre_archivo_svg
+                    
+                    # Preparar etiquetas para el gráfico
+                    paises_en_plot = df_scores_final.index.tolist()
+                    grupos_para_plot = [COUNTRY_GROUPS.get(code, 'Otros') for code in paises_en_plot]
+                    nombres_indicadores_mapeados_cs = [MAPEO_INDICADORES.get(code, code) for code in df_year_estandarizado.columns.tolist()]
+                    
+                    # Llamar a la función de biplot con los datos finales
+                    dl_viz.graficar_biplot_corte_transversal(
+                        pca_model=pca_model_final,
+                        df_pc_scores=df_scores_final,
+                        nombres_indicadores_originales=df_year_estandarizado.columns.tolist(),
+                        nombres_indicadores_etiquetas=nombres_indicadores_mapeados_cs,
+                        nombres_individuos_etiquetas=paises_en_plot,
+                        grupos_individuos=grupos_para_plot,
+                        mapa_de_colores=GROUP_COLORS,
+                        titulo=f"Indicadores ODS para {year_to_analyze} por vías de desarrollo",
+                        ruta_guardado=ruta_para_guardar_svg
+                    )
                 else:
-                        print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
+                    print(f"No se pudo realizar PCA para el año {year_to_analyze}.")
                                     
             # --- FIN DEL BUCLE 'FOR YEAR' ---
 
@@ -690,6 +752,64 @@ if __name__ == "__main__":
             else:
                 print("\nAnálisis de corte transversal completado.")
                 break # Salir del bucle si al menos un año tuvo éxito o si el usuario no quiere reintentar
+
+
+                # --- SECCIÓN OPCIONAL: ANÁLISIS DE TRAYECTORIAS 3D ---
+    if input("\n¿Deseas realizar un análisis de TRAYECTORIAS (Panel PCA 3D)? (s/n): ").strip().lower() == 's':
+        
+        while True: # Bucle para reintentar la configuración
+            print("\n" + "="*10 + " Configuración del Análisis de Trayectorias 3D " + "="*10)
+            
+            # 1. Seleccionar Indicadores y Países
+            selected_indicators = select_indicators(available_sheet_names_list, MAPEO_INDICADORES)
+            if not selected_indicators:
+                if input("No se seleccionaron indicadores. ¿Salir? (s/n): ").lower() == 's': break
+                else: continue
+
+            selected_countries = select_countries(all_sheets_data, CODE_TO_NAME)
+            if not selected_countries:
+                if input("No se seleccionaron países. ¿Reintentar? (s/n): ").lower() != 's': break
+                else: continue
+            
+            # 2. Preparar datos de panel
+            df_panel = dl.preparar_datos_panel_longitudinal(all_sheets_data, selected_indicators, selected_countries)
+            if df_panel.empty:
+                print("No se pudo construir el panel de datos. Revisa la selección.")
+                if input("¿Reintentar? (s/n): ").lower() != 's': break
+                else: continue
+            
+            # 3. Limpiar NaNs
+            print(f"\nDatos de panel ANTES de eliminar NaNs: {df_panel.shape[0]} filas (país-año).")
+            df_panel_no_na = df_panel.dropna(axis=0, how='any')
+            print(f"Datos de panel DESPUÉS de eliminar NaNs: {df_panel_no_na.shape[0]} filas.")
+            
+            if df_panel_no_na.shape[0] < 3 or df_panel_no_na.shape[1] < 3:
+                print("Datos insuficientes para el análisis 3D después de eliminar NaNs.")
+                if input("¿Reintentar? (s/n): ").lower() != 's': break
+                else: continue
+            
+            # 4. Estandarizar y Realizar PCA
+            print("\nEstandarizando datos de panel y realizando PCA...")
+            df_panel_estandarizado, scaler_panel = dl_prep.estandarizar_datos(df_panel_no_na, devolver_scaler=True)
+            pca_model_panel, df_pc_scores_panel = pca_mod.realizar_pca(df_panel_estandarizado, n_components=3)
+
+            # 5. Visualizar Gráfico 3D
+            if pca_model_panel and not df_pc_scores_panel.empty:
+                dl_viz.graficar_trayectorias_3d(
+                    df_pc_scores_panel,
+                    pca_model_panel,
+                    COUNTRY_GROUPS,
+                    GROUP_COLORS,
+                    titulo="Trayectorias de Países en el Espacio PCA (2000-2022)" # Puedes ajustar el título
+                )
+            else:
+                print("No se pudo realizar el PCA sobre los datos de panel.")
+            
+            # Salir del bucle después de un análisis exitoso
+            break
+
+    print("\n---------------------------------------------")
+    print("Fin de la ejecución de la Herramienta de Análisis.")
 
     print("\n---------------------------------------------")
     print("Fin de la ejecución de la Herramienta de Análisis.")

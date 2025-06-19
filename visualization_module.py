@@ -247,9 +247,13 @@ def graficar_biplot_corte_transversal(
     ax.set_ylabel(f"{pc_y_label} ({var_pc_y:.2f}% varianza explicada)", fontsize=12)
     ax.set_title(titulo, fontsize=15)
     ax.grid(True, linestyle=':', alpha=0.7, zorder=0)
-    ax.axhline(0, color='black', linewidth=0.5, linestyle='--')
-    ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
+    ax.axhline(0, color='dimgray', linewidth=1.5, linestyle='-', zorder=1)
+    ax.axvline(0, color='dimgray', linewidth=1.5, linestyle='-', zorder=1)
     fig.tight_layout(rect=[0, 0, 0.88, 0.96])
+
+        # --- AÑADIR TEXTO DE LA "FUENTE" de elaboración ---
+    fig.text(0.03, 0.0007, "Fuente: Elaboración propia con datos de WDI.", 
+             ha='left', va='bottom', fontsize=8, color='gray')
 
     # --- 6. Guardar y Mostrar ---
     # Guardar el gráfico ANTES de mostrarlo
@@ -264,5 +268,52 @@ def graficar_biplot_corte_transversal(
             print(f"Error al guardar el gráfico en {ruta_guardado}: {e}")
 
     # Mostrar el gráfico maximizado
+    maximizar_plot()
+    plt.show()
+
+def graficar_trayectorias_3d(df_pc_scores, pca_model, grupos_paises, mapa_de_colores, titulo="Trayectorias de Países en el Espacio PCA"):
+    """
+    Crea un gráfico 3D que muestra las trayectorias de los países a través del tiempo
+    en el espacio de los 3 primeros componentes principales.
+    """
+    if df_pc_scores.shape[1] < 3:
+        print("Error: Se necesitan al menos 3 componentes principales para un gráfico 3D.")
+        return
+
+    fig = plt.figure(figsize=(16, 12))
+    ax = fig.add_subplot(projection='3d')
+
+    paises_unicos = df_pc_scores.index.get_level_values('País').unique()
+
+    for pais_code in paises_unicos:
+        datos_pais = df_pc_scores.loc[pais_code]
+        if datos_pais.empty: continue
+            
+        grupo = grupos_paises.get(pais_code, 'Otros')
+        color = mapa_de_colores.get(grupo, 'gray')
+        
+        ax.plot(datos_pais['PC1'], datos_pais['PC2'], datos_pais['PC3'], 
+                color=color, alpha=0.6, label=f'_line_{pais_code}')
+        
+        ax.scatter(datos_pais['PC1'].iloc[0], datos_pais['PC2'].iloc[0], datos_pais['PC3'].iloc[0], 
+                   color=color, marker='o', s=40, label=f'_start_{pais_code}')
+        ax.scatter(datos_pais['PC1'].iloc[-1], datos_pais['PC2'].iloc[-1], datos_pais['PC3'].iloc[-1], 
+                   color=color, marker='^', s=100, label=f'_end_{pais_code}')
+        # Añadir etiqueta solo al punto final para no saturar el gráfico
+        ax.text(datos_pais['PC1'].iloc[-1], datos_pais['PC2'].iloc[-1], datos_pais['PC3'].iloc[-1], 
+                f' {pais_code}', color='black', fontsize=9)
+
+    legend_patches = [mpatches.Patch(color=color, label=grupo) for grupo, color in mapa_de_colores.items()]
+    ax.legend(handles=legend_patches, title="Grupos de Países", loc='center left', bbox_to_anchor=(1.05, 0.5))
+
+    var_pc1 = pca_model.explained_variance_ratio_[0] * 100
+    var_pc2 = pca_model.explained_variance_ratio_[1] * 100
+    var_pc3 = pca_model.explained_variance_ratio_[2] * 100
+    ax.set_xlabel(f"\nPC1 ({var_pc1:.2f}%)", fontsize=10)
+    ax.set_ylabel(f"\nPC2 ({var_pc2:.2f}%)", fontsize=10)
+    ax.set_zlabel(f"\nPC3 ({var_pc3:.2f}%)", fontsize=10)
+    
+    ax.set_title(titulo, fontsize=16)
+    fig.tight_layout()
     maximizar_plot()
     plt.show()
