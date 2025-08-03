@@ -4,47 +4,67 @@ from dataclasses import dataclass, asdict, field
 from typing import List, Dict
 
 @dataclass
-class ProjectConfig:
-    # ─── Atributos básicos ────────────────────────────────────────────────
-    project_name:        str                      = ""
-    data_file:           str                      = ""
-    selected_indicators: List[str]                = field(default_factory=list)
-    selected_units:      List[str]                = field(default_factory=list)
-    selected_years:      List[int]                = field(default_factory=list)
 
-    # personalizaciones de gráfica
-    color_groups:  Dict[str, str] = field(default_factory=dict)
-    group_labels:  Dict[str, str] = field(default_factory=dict)
-    custom_titles: Dict[str, str] = field(default_factory=lambda: {
-        "biplot": "",
-        "legend": "Grupos de Países",
-        "footer": ""
+class ProjectConfig:
+    project_name: str = ""
+    # Cada análisis tiene su propia configuración
+    series_config: dict = field(default_factory=lambda: {
+        "data_file": "",
+        "selected_indicators": [],
+        "selected_units": [],
+        "selected_years": [],
+        "color_groups": {},
+        "group_labels": {},
+        "custom_titles": {"biplot": "", "legend": "Grupos de Países", "footer": ""},
+        "analysis_results": {},
+        "footer_note": ""
+    })
+    cross_section_config: dict = field(default_factory=lambda: {
+        "data_file": "",
+        "selected_indicators": [],
+        "selected_units": [],
+        "selected_years": [],
+        "color_groups": {},
+        "group_labels": {},
+        "custom_titles": {"biplot": "", "legend": "Grupos de Países", "footer": ""},
+        "analysis_results": {},
+        "footer_note": ""
+    })
+    panel_config: dict = field(default_factory=lambda: {
+        "data_file": "",
+        "selected_indicators": [],
+        "selected_units": [],
+        "selected_years": [],
+        "color_groups": {},
+        "group_labels": {},
+        "custom_titles": {"biplot": "", "legend": "Grupos de Países", "footer": ""},
+        "analysis_results": {},
+        "footer_note": ""
     })
 
-    # resultados intermedios (se guardará lo que quieras)
-    analysis_results: Dict[str, str] = field(default_factory=dict)
-
-    # ─── Serialización ───────────────────────────────────────────────────
     def to_dict(self) -> dict:
-        """Devuelve la configuración como dict listo para guardar en JSON."""
-        return asdict(self)
+        return {
+            "project_name": self.project_name,
+            "series_config": self.series_config,
+            "cross_section_config": self.cross_section_config,
+            "panel_config": self.panel_config
+        }
 
     @classmethod
     def from_dict(cls, data: dict) -> "ProjectConfig":
-        """Crea un ProjectConfig a partir de un dict (por ejemplo, cargado de JSON)."""
-        return cls(**data)
+        obj = cls()
+        obj.project_name = data.get("project_name", "")
+        obj.series_config = data.get("series_config", obj.series_config)
+        obj.cross_section_config = data.get("cross_section_config", obj.cross_section_config)
+        obj.panel_config = data.get("panel_config", obj.panel_config)
+        return obj
 
-    # ---------- Métodos que necesita la GUI ----------
     def save_to_file(self, filepath: str):
-        """Guarda el proyecto en un archivo .json."""
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
     @classmethod
     def load_from_file(cls, filepath: str) -> "ProjectConfig":
-        """Carga un proyecto desde un archivo .json."""
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
         return cls.from_dict(data)
-
-    footer_note: str = ""  # leyenda / fuente opcional

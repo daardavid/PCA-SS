@@ -16,9 +16,9 @@ class PCAAnalysisLogic:
         Ejecuta el flujo de análisis de serie de tiempo (sin GUI).
         Retorna un diccionario con todos los resultados intermedios y finales.
         """
-        all_sheets_data = dl.load_excel_file(cfg.data_file)
-        selected_indicators = cfg.selected_indicators
-        selected_unit = cfg.selected_units[0]
+        all_sheets_data = dl.load_excel_file(cfg["data_file"])
+        selected_indicators = cfg["selected_indicators"]
+        selected_unit = cfg["selected_units"][0]
 
         # 2. Transformar cada hoja
         data_transformada = {}

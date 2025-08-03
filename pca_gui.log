@@ -1,0 +1,318 @@
+2025-08-03 10:54:07,700 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 525, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 10:55:13,063 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 636, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:36:04,410 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 526, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:36:29,648 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 634, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:36:33,812 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 634, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:36:36,493 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 634, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:41:13,754 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 526, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:41:30,068 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 526, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:41:33,072 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 526, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:42:03,885 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 526, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:44:34,777 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 531, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:44:52,949 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 531, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:44:58,586 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 531, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:45:46,752 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 531, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:50:12,986 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 531, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:50:38,772 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 640, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:50:40,805 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 640, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:51:03,289 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 640, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:58:23,509 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 638, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:58:44,006 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 638, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 11:58:47,123 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 530, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 12:00:03,581 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 638, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 12:22:59,173 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 638, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 12:23:12,678 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 638, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 19, in run_cross_section_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 12:23:17,048 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 530, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 19, in run_series_analysis_logic
+    all_sheets_data = dl.load_excel_file(cfg.data_file)
+                                         ^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'data_file'
+2025-08-03 12:25:58,163 ERROR Error in edit_title_dialog
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 1164, in edit_title_dialog
+    initialvalue=cfg.custom_titles.get("biplot", "")
+                 ^^^^^^^^^^^^^^^^^
+AttributeError: 'ProjectConfig' object has no attribute 'custom_titles'
+2025-08-03 12:26:09,949 ERROR Error in edit_legend_dialog
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 56, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 1177, in edit_legend_dialog
+    initialvalue=cfg.custom_titles.get("legend", "")
+                 ^^^^^^^^^^^^^^^^^
+AttributeError: 'ProjectConfig' object has no attribute 'custom_titles'

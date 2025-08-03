@@ -16,9 +16,9 @@ class PCAAnalysisLogic:
         Ejecuta el flujo de análisis de corte transversal para un año (sin GUI).
         Retorna un diccionario con todos los resultados intermedios y finales.
         """
-        all_sheets_data = dl.load_excel_file(cfg.data_file)
-        selected_indicators = cfg.selected_indicators
-        selected_units = cfg.selected_units
+        all_sheets_data = dl.load_excel_file(cfg["data_file"])
+        selected_indicators = cfg["selected_indicators"]
+        selected_units = cfg["selected_units"]
         # 1. Preparar DataFrame de corte transversal
         df_year_cross_section = dl.preparar_datos_corte_transversal(
             all_sheets_data, selected_indicators, selected_units, year_to_analyze
