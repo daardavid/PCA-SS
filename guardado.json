@@ -1,0 +1,21 @@
+{
+  "project_name": "DesigualdadLatam_2024",
+  "data_file": "C:/Users/messi/Documents/latam_data.xlsx",
+  "selected_indicators": ["Poverty", "GDP growth", "Life Expectancy"],
+  "selected_units": ["ARG", "BRA", "MEX"],
+  "selected_years": [2010, 2015, 2020],
+  "color_groups": {
+    "ARG": "red",
+    "BRA": "green",
+    "MEX": "blue"
+  },
+  "group_labels": {
+    "ARG": "Cono Sur",
+    "BRA": "Brasil",
+    "MEX": "México"
+  },
+  "custom_titles": {
+    "series": "Evolución de Indicadores ODS",
+    "biplot": "Biplot de Indicadores por País"
+  }
+}

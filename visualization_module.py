@@ -188,8 +188,11 @@ def graficar_biplot_corte_transversal(
     fontsize_paises=10,
     fontsize_indicadores=11,
 
-    # --- Parámetro para Guardar (¡Este es el importante!) ---
-    ruta_guardado=None
+    # --- Parámetro para Guardar  ---
+    ruta_guardado=None,
+    # --- Nota al pie personalizada ---
+    footer_note=None,
+    legend_title="Grupos de Países"
 ):
     """
     [OPTIMIZADA] Crea un biplot maximizado, flexible y legible para un análisis de PCA de corte transversal.
@@ -236,7 +239,7 @@ def graficar_biplot_corte_transversal(
     if grupos_individuos and mapa_de_colores:
         unique_groups_in_plot = sorted(list(set(grupos_individuos)))
         legend_patches = [mpatches.Patch(color=mapa_de_colores.get(group, 'gray'), label=group) for group in unique_groups_in_plot]
-        ax.legend(handles=legend_patches, title="Grupos de Países", loc='upper left', bbox_to_anchor=(1.02, 1))
+        ax.legend(handles=legend_patches, title=legend_title, loc='upper left', bbox_to_anchor=(1.02, 1))
 
     # --- 5. Formato Final del Gráfico ---
     pc_x_label = df_pc_scores.columns[pc_x]
@@ -251,9 +254,9 @@ def graficar_biplot_corte_transversal(
     ax.axvline(0, color='dimgray', linewidth=1.5, linestyle='-', zorder=1)
     fig.tight_layout(rect=[0, 0, 0.88, 0.96])
 
-        # --- AÑADIR TEXTO DE LA "FUENTE" de elaboración ---
-    fig.text(0.03, 0.0007, "Fuente: Elaboración propia con datos de WDI.", 
-             ha='left', va='bottom', fontsize=8, color='gray')
+    # --- Pie de gráfico: solo mostrar si hay leyenda personalizada ---
+    if footer_note:
+        fig.text(0.03, 0.0007, footer_note, ha='left', va='bottom', fontsize=9, color='dimgray')
 
     # --- 6. Guardar y Mostrar ---
     # Guardar el gráfico ANTES de mostrarlo

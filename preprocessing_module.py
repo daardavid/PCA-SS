@@ -9,10 +9,7 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
                             devolver_mascara=False, iteraciones_imputador=10, 
                             estimador_imputador=None, metodo_interpolacion='linear', 
                             orden_interpolacion=3, knn_vecinos=5, **kwargs):
-    print(f"\n--- Manejando Datos Faltantes (Estrategia: {estrategia}) ---")
     if df.empty:
-        # ... (código para df vacío) ...
-        print("  DataFrame de entrada está vacío. No se realiza ninguna acción.")
         if devolver_mascara:
             mascara_vacia = pd.DataFrame(False, index=df.index, columns=df.columns)
             return df.copy(), mascara_vacia
@@ -23,13 +20,11 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
     faltantes_antes = mascara_imputados_original.sum().sum()
 
     if faltantes_antes == 0:
-        # ... (código si no hay faltantes) ...
-        print("  No se encontraron datos faltantes.")
         if devolver_mascara:
             return df_copia, pd.DataFrame(False, index=df.index, columns=df.columns)
-        return df_copy
+        return df_copia
     
-    print(f"  Datos faltantes ANTES (por columna):\n{df_copia.isnull().sum()[df_copia.isnull().sum() > 0]}")
+    # print(f"  Datos faltantes ANTES (por columna):\n{df_copia.isnull().sum()[df_copia.isnull().sum() > 0]}")
 
     columnas_originales = df_copia.columns.tolist()
     indice_original = df_copia.index
@@ -41,7 +36,7 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
 
     if estrategia == 'eliminar_filas':
         df_copia.dropna(axis=0, how='any', inplace=True)
-        print("  Filas con valores NaN eliminadas.")
+        # print("  Filas con valores NaN eliminadas.")
         df_procesado = True
     
     elif estrategia in ['mean', 'median', 'most_frequent', 'valor_constante']:
@@ -83,12 +78,12 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
                 for col in cols_a_imputar_simple:
                     df_imputado_final_simple[col] = df_imputado_parcial[col]
             else:
-                print(f"  No hay columnas aptas para la estrategia '{estrategia}' en SimpleImputer (ej. 'mean' con solo categóricas con NaNs).")
+                pass
 
         # Las columnas en cols_todo_nan y cols_sin_nan ya están correctas en df_imputado_final_simple
         # (o se quedan como NaN o ya estaban completas)
         df_copia = df_imputado_final_simple[columnas_originales] # Asegurar orden
-        print(f"  Valores NaN rellenados con '{estrategia}'.")
+        # print(f"  Valores NaN rellenados con '{estrategia}'.")
         df_procesado = True
 
     elif estrategia == 'ffill':
@@ -96,19 +91,19 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
         limit_val = kwargs.get('ffill_limit')
         df_copia.ffill(inplace=True, limit=limit_val)
         df_copia.bfill(inplace=True, limit=kwargs.get('bfill_limit_after_ffill'))
-        print(f"  Valores NaN rellenados con forward fill (limit={limit_val}).")
+        # print(f"  Valores NaN rellenados con forward fill (limit={limit_val}).")
         df_procesado = True
     elif estrategia == 'bfill':
         # ... (código bfill como estaba) ...
         limit_val = kwargs.get('bfill_limit')
         df_copia.bfill(inplace=True, limit=limit_val)
         df_copia.ffill(inplace=True, limit=kwargs.get('ffill_limit_after_bfill'))
-        print(f"  Valores NaN rellenados con backward fill (limit={limit_val}).")
+        # print(f"  Valores NaN rellenados con backward fill (limit={limit_val}).")
         df_procesado = True
     elif estrategia == 'interpolacion':
         # ... (código interpolacion como estaba, asegurando que solo aplica a numeric_cols_original) ...
         if not numeric_cols_original:
-            print("  No hay columnas numéricas para aplicar interpolación.")
+            pass
         else:
             df_copia[numeric_cols_original] = df_copia[numeric_cols_original].interpolate(
                 method=metodo_interpolacion, axis=0, limit_direction='both', 
@@ -116,7 +111,7 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
             )
             df_copia[numeric_cols_original] = df_copia[numeric_cols_original].ffill()
             df_copia[numeric_cols_original] = df_copia[numeric_cols_original].bfill()
-            print(f"  Valores NaN en columnas numéricas rellenados mediante interpolación '{metodo_interpolacion}'.")
+            # print(f"  Valores NaN en columnas numéricas rellenados mediante interpolación '{metodo_interpolacion}'.")
         df_procesado = True
     
     elif estrategia in ['iterative', 'knn']:
@@ -125,15 +120,15 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
         cols_num_imputables_adv = [col for col in numeric_cols_original if df_copia[col].notna().any()]
         
         if not cols_num_imputables_adv:
-            print(f"  No hay columnas numéricas con datos para aplicar '{estrategia}'.")
+            pass
         else:
             df_parte_num_imputable_adv = df_copia[cols_num_imputables_adv].copy()
             
             if estrategia == 'iterative':
-                print(f"  Aplicando IterativeImputer a columnas numéricas (max_iter={iteraciones_imputador})...")
+                pass
                 imputer_adv = IterativeImputer(max_iter=iteraciones_imputador, random_state=0, estimator=estimador_imputador)
             else: # knn
-                print(f"  Aplicando KNNImputer a columnas numéricas (n_neighbors={knn_vecinos})...")
+                pass
                 imputer_adv = KNNImputer(n_neighbors=knn_vecinos)
             
             df_imputado_np_adv = imputer_adv.fit_transform(df_parte_num_imputable_adv)
@@ -142,18 +137,13 @@ def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None,
             # Actualizar df_copia solo con las columnas numéricas imputadas
             for col in cols_num_imputables_adv:
                 df_copia[col] = df_imputado_parcial_adv[col]
-            print(f"  Valores NaN en columnas numéricas imputados usando '{estrategia}'.")
+            # print(f"  Valores NaN en columnas numéricas imputados usando '{estrategia}'.")
         df_procesado = True
     
-    if not df_procesado: # Si la estrategia no fue reconocida
-        print(f"  Advertencia: Estrategia '{estrategia}' no reconocida. No se manejaron los datos faltantes.")
+    if not df_procesado:
+        pass
 
-    faltantes_despues = df_copia.isnull().sum().sum()
-    if faltantes_despues > 0:
-        print(f"  ADVERTENCIA: Aún quedan {faltantes_despues} datos faltantes después de aplicar la estrategia '{estrategia}'.")
-        print(f"  Datos faltantes DESPUÉS (por columna):\n{df_copia.isnull().sum()[df_copia.isnull().sum() > 0]}")
-    else:
-        print("  Todos los datos faltantes han sido manejados.")
+    # Mensajes de advertencia eliminados para limpieza
         
     if devolver_mascara:
         mascara_final_imputados = mascara_imputados_original & (~df_copia.isnull())
@@ -175,9 +165,7 @@ def estandarizar_datos(df, devolver_scaler=False):
         pd.DataFrame: DataFrame con las columnas numéricas estandarizadas.
         (Opcional) sklearn.preprocessing.StandardScaler: El objeto scaler ajustado.
     """
-    print("\n--- Estandarizando Datos ---")
     if df.empty:
-        print("  DataFrame de entrada está vacío. No se realiza estandarización.")
         if devolver_scaler:
             return df.copy(), None
         return df.copy()
@@ -193,14 +181,14 @@ def estandarizar_datos(df, devolver_scaler=False):
             return df_copia, None
         return df_copia
 
-    print(f"  Columnas numéricas a estandarizar: {numeric_cols}")
+    # print(f"  Columnas numéricas a estandarizar: {numeric_cols}")
     
     scaler = StandardScaler()
     
     # Aplicar el scaler SOLO a las columnas numéricas
     df_copia[numeric_cols] = scaler.fit_transform(df_copia[numeric_cols])
     
-    print("  Datos estandarizados exitosamente.")
+    # print("  Datos estandarizados exitosamente.")
     
     if devolver_scaler:
         return df_copia, scaler
@@ -344,94 +332,4 @@ def prompt_select_imputation_strategy():
         except ValueError:
             print("Entrada inválida. Por favor, ingresa solo un número.")
 
-# --- Bloque de prueba para preprocessing_module.py ---
-if __name__ == '__main__':
-    print("--- Ejecutando pruebas para preprocessing_module.py ---")
-    data_ejemplo = {
-        'IndicadorA_num': [1, 2, np.nan, 4, 5, np.nan, 7],
-        'IndicadorB_num': [np.nan, 20, 30, 40, np.nan, 60, 70],
-        'IndicadorC_cat': ['A', 'B', np.nan, 'A', 'C', 'B', np.nan], # Columna categórica
-        'IndicadorD_num': [5, np.nan, np.nan, np.nan, 10, 12, 15],
-        'IndicadorE_all_nan': [np.nan] * 7 
-    }
-    df_prueba = pd.DataFrame(data_ejemplo) 
-    df_prueba.index = pd.RangeIndex(start=2000, stop=2000 + len(df_prueba), name="Año")
-    # Forzar tipo float para columnas que deberían ser numéricas y podrían tener NaNs
-    for col in ['IndicadorA_num', 'IndicadorB_num', 'IndicadorD_num', 'IndicadorE_all_nan']:
-        df_prueba[col] = df_prueba[col].astype(float)
 
-    print("\nDataFrame de Prueba Original:")
-    print(df_prueba)
-    print(df_prueba.dtypes)
-
-    estrategias_a_probar = [
-        'interpolacion', 
-        ('interpolacion', {'metodo_interpolacion': 'polynomial', 'orden_interpolacion': 2}),
-        'mean', 
-        'median', 
-        'most_frequent', # Nueva estrategia para probar
-        'ffill', 
-        ('ffill', {'ffill_limit': 1}), # Probar con kwargs
-        'bfill', 
-        'iterative', 
-        'knn', 
-        ('knn', {'knn_vecinos': 3}),
-        'eliminar_filas', 
-        ('valor_constante', {'valor_relleno': 0.0}),
-        ('valor_constante', {'valor_relleno': 'Desconocido'}) # Para probar con categóricas
-    ]
-
-    for test_config in estrategias_a_probar:
-        params = {}
-        if isinstance(test_config, tuple):
-            nombre_estrategia = test_config[0]
-            params = test_config[1]
-        else:
-            nombre_estrategia = test_config
-        
-        print(f"\n\n--- Probando estrategia: '{nombre_estrategia}' con params: {params} ---")
-        
-        df_resultado, mascara = manejar_datos_faltantes(
-            df_prueba.copy(), 
-            estrategia=nombre_estrategia, 
-            devolver_mascara=True, 
-            **params # Desempaquetar parámetros adicionales
-        )
-        print("DataFrame Resultante:")
-        print(df_resultado)
-        # print("Máscara de Imputados (True donde se imputó):")
-        # print(mascara)
-        print(f"Total de valores imputados: {mascara.sum().sum()}")
-        print("Tipos de datos del resultado:")
-        print(df_resultado.dtypes)
-
-    # --- Pruebas para estandarizar_datos ---
-    print("\n\n--- Probando estandarizar_datos ---")
-    data_estandarizar = {
-        'Indicador1': np.array([10, 20, 30, 40, 50], dtype=float),
-        'Indicador2': np.array([100, 150, 120, 180, 130], dtype=float),
-        'Categoria': ['X', 'Y', 'X', 'Z', 'Y'] # Columna no numérica
-    }
-    df_para_estandarizar = pd.DataFrame(data_estandarizar, index=pd.RangeIndex(start=2000, stop=2005, name="Año"))
-    
-    print("\nDataFrame Original para Estandarizar:")
-    print(df_para_estandarizar)
-    
-    df_estandarizado_test, scaler_obj = estandarizar_datos(df_para_estandarizar.copy(), devolver_scaler=True)
-    
-    print("\nDataFrame Estandarizado:")
-    print(df_estandarizado_test)
-    if scaler_obj:
-        print(f"\nMedia de las columnas numéricas originales (usada por el scaler): {scaler_obj.mean_}")
-        print(f"Varianza de las columnas numéricas originales (usada por el scaler): {scaler_obj.var_}")
-
-    print("\nVerificando media y desviación estándar del DataFrame estandarizado (columnas numéricas):")
-    if not df_estandarizado_test.empty:
-        numeric_cols_est = df_estandarizado_test.select_dtypes(include=np.number).columns
-        if not numeric_cols_est.empty:
-            print("Medias (deberían ser aprox. 0):")
-            print(df_estandarizado_test[numeric_cols_est].mean())
-            print("Desviaciones Estándar (deberían ser aprox. 1):")
-            print(df_estandarizado_test[numeric_cols_est].std())
-        else:
-            print("No hay columnas numéricas en el resultado estandarizado para verificar.")

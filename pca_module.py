@@ -279,9 +279,9 @@ def prompt_seleccionar_n_componentes(max_components, suggested_n_comp_90=None, s
     while True:
         prompt_message = f"Ingresa el número de componentes principales que deseas retener (1-{max_components}).\n"
         if suggested_n_comp_90:
-            prompt_message += f"  Sugerencia: {suggested_n_comp_90} componentes explican aprox. el 90% de la varianza.\n"
+            prompt_message += f"  Sugerencia: {suggested_n_comp_90} componentes explican aprox. el 80% de la varianza.\n"
         if suggested_n_comp_95:
-            prompt_message += f"  Sugerencia: {suggested_n_comp_95} componentes explican aprox. el 95% de la varianza.\n"
+            prompt_message += f"  Sugerencia: {suggested_n_comp_95} componentes explican aprox. el 90% de la varianza.\n"
         prompt_message += f"Presiona Enter para usar todos ({max_components}): "
 
         try:

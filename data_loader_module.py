@@ -3,61 +3,41 @@ import pandas as pd
 import numpy as np
 from functools import reduce 
 import traceback
-1
+
+
 def load_excel_file(file_path):
-    # PRINT DE DEPURACIÓN INMEDIATO AL ENTRAR A LA FUNCIÓN
-    print(f"DEBUG MODULE: Función load_excel_file llamada con ruta: {file_path}")
-    print(f"DEBUG MODULE: Tipo de file_path: {type(file_path)}")
-    
     try:
-        print(f"DEBUG MODULE: Intentando pd.ExcelFile() con: {file_path}")
-        # Bloque try-except para la apertura inicial del archivo y obtención de nombres de hojas
         try:
             excel_data = pd.ExcelFile(file_path)
             sheet_names = excel_data.sheet_names
-            print(f"\n--- MODULE Cargando hojas del archivo: {file_path} ---")
-            print(f"DEBUG MODULE: Hojas encontradas en el archivo: {sheet_names}")
-        except Exception as e_open: # Error específico al abrir o leer nombres de hojas
-            print(f"MODULE Error al intentar abrir el archivo Excel o leer nombres de hojas '{file_path}': {e_open}")
-            print("---------- MODULE TRACEBACK DETALLADO (apertura/nombres hoja) ----------")
+            print(f"\nCargando hojas del archivo: {file_path}")
+        except Exception as e_open:
+            print(f"Error al abrir el archivo Excel o leer nombres de hojas '{file_path}': {e_open}")
             traceback.print_exc()
-            print("-------------------------------------------------------------------")
-            return None # Retornar None si la apertura inicial falla
+            return None
 
-        dataframes = {} # Mover la inicialización aquí, después de confirmar que sheet_names existe
-
+        dataframes = {}
         if not sheet_names:
-            print("Advertencia MODULE: El archivo Excel no contiene hojas.")
-            return {} # Retornar diccionario vacío si no hay hojas
+            print("Advertencia: El archivo Excel no contiene hojas.")
+            return {}
 
         for sheet_name in sheet_names:
             try:
-                print(f"DEBUG MODULE: Intentando parsear la hoja '{sheet_name}'")
                 df = excel_data.parse(sheet_name)
                 dataframes[sheet_name] = df
-                print(f"  MODULE Hoja '{sheet_name}' cargada exitosamente.")
             except Exception as e_parse:
-                print(f"  MODULE Error al parsear la hoja '{sheet_name}'.")
-                print(f"  MODULE Detalle del error: {e_parse}")
-                print("---------- MODULE TRACEBACK DETALLADO (parseo hoja) ----------")
+                print(f"Error al parsear la hoja '{sheet_name}': {e_parse}")
                 traceback.print_exc()
-                print("---------------------------------------------------------")
 
-        if not dataframes: # Si ninguna hoja se pudo parsear correctamente
-            print(f"Advertencia MODULE: No se pudo parsear ninguna hoja de datos válida del archivo (diccionario 'dataframes' está vacío).")
-        
-        print(f"DEBUG MODULE: Retornando 'dataframes'. Es vacío? {not bool(dataframes)}")
+        if not dataframes:
+            print("Advertencia: No se pudo parsear ninguna hoja de datos válida del archivo.")
         return dataframes
-           
-    except FileNotFoundError: # Este except es para pd.ExcelFile(file_path)
-        print(f"MODULE Error: Archivo no encontrado en la ruta: {file_path}")
-        return None 
-           
-    except Exception as e_load: # Otro error genérico para pd.ExcelFile(file_path)
-        print(f"MODULE Error CRÍTICO (inesperado) al procesar el archivo Excel '{file_path}': {e_load}")
-        print("---------- MODULE TRACEBACK DETALLADO (carga general) ----------")
-        traceback.print_exc() 
-        print("-----------------------------------------------------------")
+    except FileNotFoundError:
+        print(f"Error: Archivo no encontrado en la ruta: {file_path}")
+        return None
+    except Exception as e_load:
+        print(f"Error inesperado al procesar el archivo Excel '{file_path}': {e_load}")
+        traceback.print_exc()
         return None
 
 def prompt_select_sheets(available_sheet_names):
@@ -437,32 +417,5 @@ def preparar_datos_panel_longitudinal(all_sheets_data, selected_indicators_codes
     
     return df_panel_final
 
-# --- Bloque de prueba ---
-if __name__ == '__main__':
-    print("--- Ejecutando pruebas para data_loader_module.py ---")
-    test_file_path_v1 = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\INDICADORES WDI_V8_vf.xlsm"
-    
-    # Llama directamente a las funciones definidas arriba en el módulo
-    all_data_v1 = load_excel_file(test_file_path_v1)
 
-    if all_data_v1 and 'DT.TDS.DECT.GN.ZS' in all_data_v1: # Asegúrate que esta hoja exista para probar
-        df_para_transformar_v1 = all_data_v1['DT.TDS.DECT.GN.ZS']
-        print("\nDataFrame original V1 de DT.TDS.DECT.GN.ZS (primeras filas):")
-        print(df_para_transformar_v1.head())
         
-        df_transformado_v1 = transformar_df_indicador_v1(df_para_transformar_v1, 
-                                                        col_paises_nombre_original='Unnamed: 0', # VERIFICA este nombre
-                                                        nuevo_nombre_indice_paises='Pais')
-
-        if df_transformado_v1 is not None:
-            print("\n--- DataFrame REAL V1 Transformado (DT.TDS.DECT.GN.ZS) ---")
-            print(df_transformado_v1.head())
-            print(f"Índice: {df_transformado_v1.index.name}, Tipo: {df_transformado_v1.index.dtype}")
-            print(f"Columnas (Países): {df_transformado_v1.columns.tolist()}")
-            print(f"Forma del DataFrame transformado: {df_transformado_v1.shape}")
-        else:
-            print("Fallo la transformación del DataFrame V1 real.")
-    elif not all_data_v1:
-        print("No se cargaron datos para la prueba de transformación.")
-    else:
-        print(f"La hoja 'DT.TDS.DECT.GN.ZS' no se encontró en los datos cargados para la prueba de transformación.")
