@@ -1,13 +1,61 @@
 # visualization_module.py
+"""
+Módulo de visualización para análisis PCA socioeconómico.
+
+Este módulo proporciona funciones especializadas para crear visualizaciones
+de alta calidad para análisis de componentes principales, incluyendo:
+- Series de tiempo múltiples
+- Biplots 2D interactivos
+- Gráficos 3D de trayectorias
+- Scree plots para varianza explicada
+
+Todas las funciones están optimizadas para datos socioeconómicos y proporcionan
+opciones avanzadas de personalización y exportación.
+
+Autor: David Armando Abreu Rosique
+Fecha: 2025
+"""
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches #para la leyenda de los colores
+import matplotlib.patches as mpatches
 import pandas as pd
 import numpy as np
-from adjustText import adjust_text
 from pathlib import Path
+from typing import Dict, List, Optional, Union, Tuple
 
-def maximizar_plot():
-    """Intenta maximizar la ventana del plot de Matplotlib para diferentes 'backends'."""
+# Import seguro de adjustText con fallback
+try:
+    from adjustText import adjust_text
+    ADJUSTTEXT_AVAILABLE = True
+except ImportError:
+    ADJUSTTEXT_AVAILABLE = False
+    def adjust_text(*args, **kwargs):
+        """Fallback silencioso cuando adjustText no está disponible."""
+        pass
+
+
+def maximizar_plot() -> None:
+    """
+    Intenta maximizar la ventana del plot de Matplotlib para diferentes backends.
+    
+    Esta función detecta automáticamente el backend gráfico en uso y aplica
+    el método de maximización correspondiente. Es compatible con los backends
+    más comunes de Matplotlib.
+    
+    Backends soportados:
+        - Qt5Agg/Qt4Agg: Usa showMaximized()
+        - TkAgg: Usa state('zoomed')
+        - Otros: Fallback silencioso
+        
+    Note:
+        Si la maximización automática falla, el gráfico se mostrará en el
+        tamaño especificado por el parámetro figsize de la función llamadora.
+        
+    Example:
+        >>> plt.figure(figsize=(12, 8))
+        >>> plt.plot([1, 2, 3], [4, 5, 6])
+        >>> maximizar_plot()  # Intenta maximizar antes de mostrar
+        >>> plt.show()
+    """
     try:
         # Esta función busca el manejador de la figura actual y llama al método
         # de maximización correspondiente al sistema operativo y backend gráfico.

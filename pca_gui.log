@@ -316,3 +316,39 @@ Traceback (most recent call last):
     initialvalue=cfg.custom_titles.get("legend", "")
                  ^^^^^^^^^^^^^^^^^
 AttributeError: 'ProjectConfig' object has no attribute 'custom_titles'
+2025-08-03 16:43:55,201 ERROR Error in run_series_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 93, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 144, in run_series_analysis
+    results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_logic.py", line 69, in run_series_analysis_logic
+    sugg_90 = np.where(cum_evr >= 0.90)[0]
+                       ^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'NoneType' and 'float'
+2025-08-03 16:44:04,192 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 93, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 750, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 57, in run_cross_section_analysis_logic
+    'Componente': [f'PC{i+1}' for i in range(len(evr_cs))],
+                                             ^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()
+2025-08-03 16:44:44,728 ERROR Error in run_cross_section_analysis
+Traceback (most recent call last):
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 93, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_gui.py", line 750, in run_cross_section_analysis
+    temp_results = PCAAnalysisLogic.run_cross_section_analysis_logic(cfg, year_to_analyze)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\pca_cross_logic.py", line 57, in run_cross_section_analysis_logic
+    'Componente': [f'PC{i+1}' for i in range(len(evr_cs))],
+                                             ^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()

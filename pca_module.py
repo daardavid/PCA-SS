@@ -1,56 +1,128 @@
 # pca_module.py
+"""
+Módulo de Análisis de Componentes Principales (PCA) para datos socioeconómicos.
+
+Este módulo implementa funciones especializadas para:
+- Realizar PCA con configuraciones flexibles
+- Calcular y analizar varianza explicada
+- Generar visualizaciones de scree plots
+- Extraer cargas (loadings) de componentes principales
+- Estandarizar direcciones de componentes para interpretación consistente
+
+Las funciones están optimizadas para análisis de datos socioeconómicos donde
+la interpretabilidad y robustez son fundamentales.
+
+Autor: David Armando Abreu Rosique
+Fecha: 2025
+"""
 import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-import traceback # Para manejo de errores si es necesario
+import traceback
+from typing import Tuple, Optional, Union, List
+
+# Importar sistemas de optimización y configuración
+from logging_config import get_logger
+from performance_optimizer import cached, profiled, optimize_memory
+from config_manager import get_config
+from data_validation import validate_dataframe_for_pca, DataValidator
+
+logger = get_logger("pca_module")
+
+def print_module_pca(mensaje: str) -> None:
+    """Imprime mensajes con prefijo del módulo para debugging."""
+    logger.debug(f"MODULE PCA: {mensaje}")
 
 
-def print_module_pca(mensaje):
-    print(f"MODULE PCA: {mensaje}")
-
-
-def realizar_pca(df_estandarizado, n_components=None):
+@profiled
+@cached
+def realizar_pca(
+    df_estandarizado: pd.DataFrame, 
+    n_components: Optional[Union[int, float, str]] = None
+) -> Tuple[Optional[PCA], Optional[pd.DataFrame]]:
     """
     Realiza el Análisis de Componentes Principales (ACP) sobre un DataFrame estandarizado.
+    
+    Esta función implementa PCA usando scikit-learn con configuraciones flexibles
+    para diferentes tipos de análisis. Maneja automáticamente casos edge como
+    datasets pequeños o con características limitadas.
 
     Args:
-        df_estandarizado (pd.DataFrame): DataFrame con datos estandarizados (numéricos, sin NaNs).
-                                         Se espera que las filas sean observaciones (ej. Años)
-                                         y las columnas sean las variables (ej. Indicadores).
-        n_components (int, float, str, optional): Número de componentes a retener.
-            - Si es int: número exacto de componentes.
-            - Si es float (0.0-1.0): % de varianza a explicar.
-            - Si es 'mle': usa el estimador Minka's MLE.
-            - Si es None (default): n_components = min(n_muestras, n_features).
+        df_estandarizado (pd.DataFrame): DataFrame con datos estandarizados (media=0, std=1).
+            Las filas deben representar observaciones (ej. años o países) y las columnas
+            variables (ej. indicadores socioeconómicos). No debe contener valores NaN.
+        n_components (Optional[Union[int, float, str]]): Número de componentes a retener.
+            - int: número exacto de componentes (ej. 3)
+            - float (0.0-1.0): porcentaje de varianza a explicar (ej. 0.95 para 95%)
+            - str 'mle': usa estimador Maximum Likelihood de Minka
+            - None: retiene min(n_muestras, n_features) componentes
 
     Returns:
-        tuple: (pca_model, df_pca_components)
-            - pca_model (sklearn.decomposition.PCA): El objeto PCA ajustado.
-                                                     None si hay error o df vacío.
-            - df_pca_components (pd.DataFrame): DataFrame con los componentes principales.
-                                                None si hay error o df vacío.
+        Tuple[Optional[PCA], Optional[pd.DataFrame]]: 
+            - pca_model: Objeto PCA ajustado de scikit-learn, None si hay error
+            - df_pca_components: DataFrame con componentes principales como columnas
+              (PC1, PC2, ...) y observaciones como filas, None si hay error
+
+    Raises:
+        ValueError: Si el DataFrame contiene NaN o no es numérico
+        
+    Example:
+        >>> # PCA básico con todos los componentes
+        >>> pca_model, df_components = realizar_pca(df_std)
+        >>> print(f"Componentes generados: {df_components.shape[1]}")
+        
+        >>> # PCA para explicar 95% de varianza
+        >>> pca_model, df_components = realizar_pca(df_std, n_components=0.95)
+        
+        >>> # PCA con número fijo de componentes
+        >>> pca_model, df_components = realizar_pca(df_std, n_components=3)
+        
+    Note:
+        - Se establece random_state=42 para reproducibilidad
+        - La función valida automáticamente que n_components no exceda el máximo posible
+        - Los nombres de componentes siguen el formato PC1, PC2, PC3, etc.
+        - El índice del DataFrame resultante se preserva del DataFrame original
     """
-    print_module_pca(f"Iniciando ACP con n_components={n_components if n_components is not None else 'todos'}.")
+    logger.info(f"Iniciando ACP con n_components={n_components if n_components is not None else 'todos'}.")
+
+    # Usar configuración para valores por defecto
+    config = get_config().pca
+    if n_components is None:
+        n_components = config.default_n_components
+    
+    # Validar datos de entrada usando la función independiente
+    try:
+        is_valid, validation_info = validate_dataframe_for_pca(df_estandarizado, "DataFrame estandarizado")
+        if not is_valid:
+            error_msg = f"Validación fallida: {validation_info.get('summary', 'Error desconocido')}"
+            logger.error(error_msg)
+            return None, None
+    except Exception as e:
+        logger.error(f"Error durante validación: {e}")
+        return None, None
+
+    # Optimizar memoria del DataFrame
+    df_estandarizado = optimize_memory(df_estandarizado)
 
     if df_estandarizado is None or df_estandarizado.empty:
-        print_module_pca("Error: El DataFrame estandarizado de entrada está vacío o es None.")
+        logger.error("El DataFrame estandarizado de entrada está vacío o es None.")
         return None, None
 
     if df_estandarizado.isnull().sum().sum() > 0:
-        print_module_pca("Error: El DataFrame estandarizado contiene valores NaN. El ACP no puede continuar.")
-        print_module_pca(f"NaNs por columna:\n{df_estandarizado.isnull().sum()[df_estandarizado.isnull().sum() > 0]}")
+        logger.error("El DataFrame estandarizado contiene valores NaN. El ACP no puede continuar.")
+        logger.error(f"NaNs por columna:\n{df_estandarizado.isnull().sum()[df_estandarizado.isnull().sum() > 0]}")
         return None, None
 
     try:
         # Asegurar que todas las columnas sean numéricas (aunque deberían serlo después de estandarizar)
         numeric_cols = df_estandarizado.select_dtypes(include=np.number).columns
         if len(numeric_cols) != df_estandarizado.shape[1]:
-            print_module_pca("Advertencia: No todas las columnas en el DataFrame estandarizado son numéricas.")
-            print_module_pca("Se procederá solo con las columnas numéricas.")
+            logger.warning("No todas las columnas en el DataFrame estandarizado son numéricas.")
+            logger.warning("Se procederá solo con las columnas numéricas.")
             df_procesar_pca = df_estandarizado[numeric_cols]
             if df_procesar_pca.empty:
-                 print_module_pca("Error: No hay columnas numéricas para el ACP después del filtrado.")
+                 logger.error("No hay columnas numéricas para el ACP después del filtrado.")
                  return None, None
         else:
             df_procesar_pca = df_estandarizado.copy() # Usar una copia para evitar SettingWithCopyWarning si se modifica
@@ -63,8 +135,8 @@ def realizar_pca(df_estandarizado, n_components=None):
         max_possible_components = min(df_procesar_pca.shape[0], df_procesar_pca.shape[1])
         
         if isinstance(n_components, int) and n_components > max_possible_components:
-            print_module_pca(f"Advertencia: n_components ({n_components}) es mayor que el máximo posible ({max_possible_components}).")
-            print_module_pca(f"Se ajustará n_components a {max_possible_components}.")
+            logger.warning(f"n_components ({n_components}) es mayor que el máximo posible ({max_possible_components}).")
+            logger.warning(f"Se ajustará n_components a {max_possible_components}.")
             n_components_pca = max_possible_components
         elif n_components is None: # Default
              n_components_pca = max_possible_components # Para ser explícitos
@@ -72,7 +144,7 @@ def realizar_pca(df_estandarizado, n_components=None):
             n_components_pca = n_components
 
 
-        pca_model = PCA(n_components=n_components_pca, random_state=42) # random_state para reproducibilidad
+        pca_model = PCA(n_components=n_components_pca, random_state=config.random_state) # random_state para reproducibilidad
         
         # Ajustar el modelo y transformar los datos
         # .fit_transform() ajusta el modelo y luego aplica la reducción de dimensionalidad.
@@ -85,14 +157,14 @@ def realizar_pca(df_estandarizado, n_components=None):
                                          columns=nombres_componentes, 
                                          index=df_procesar_pca.index)
 
-        print_module_pca(f"ACP realizado. Número de componentes generados: {num_componentes_reales}.")
-        print_module_pca(f"Forma del DataFrame de componentes principales: {df_pca_components.shape}")
+        logger.info(f"ACP realizado. Número de componentes generados: {num_componentes_reales}.")
+        logger.info(f"Forma del DataFrame de componentes principales: {df_pca_components.shape}")
         
         return pca_model, df_pca_components
 
     except Exception as e:
-        print_module_pca(f"Error durante la ejecución del ACP: {e}")
-        traceback.print_exc()
+        logger.error(f"Error durante la ejecución del ACP: {e}")
+        logger.error(traceback.format_exc())
         return None, None
     
 

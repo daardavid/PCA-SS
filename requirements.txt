@@ -1,0 +1,32 @@
+# PCA Análisis Socioeconómico - Dependencias
+# Análisis de datos y estadística
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+
+# Visualización
+matplotlib>=3.5.0
+adjustText>=0.7.3
+seaborn>=0.11.0
+
+# GUI
+# tkinter viene incluido con Python estándar
+
+# Utilidades
+openpyxl>=3.0.9  # Para leer/escribir archivos Excel
+xlrd>=2.0.1      # Para archivos Excel legacy
+
+# Configuración y Serialización
+PyYAML>=6.0
+
+# Monitoreo de Sistema y Rendimiento
+psutil>=5.8.0
+
+# Desarrollo y testing (opcional)
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0
+
+# Documentación
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0

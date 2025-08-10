@@ -1,11 +1,54 @@
 # data_loader_module.py
+"""
+Módulo para carga y transformación de datos desde archivos Excel.
+
+Este módulo proporciona funciones para:
+- Cargar archivos Excel con múltiples hojas
+- Transformar datos de formato ancho a largo
+- Preparar datos para análisis PCA
+- Consolidar datos por país/unidad
+- Manejar diferentes estructuras de datos (serie temporal, corte transversal, panel)
+
+Autor: David Armando Abreu Rosique
+Fecha: 2025
+"""
 import pandas as pd
 import numpy as np
 from functools import reduce 
 import traceback
+from typing import Dict, List, Optional, Tuple, Union
 
 
-def load_excel_file(file_path):
+def load_excel_file(file_path: str) -> Optional[Dict[str, pd.DataFrame]]:
+    """
+    Carga un archivo Excel y retorna todas sus hojas como DataFrames.
+    
+    Esta función maneja errores de manera robusta y proporciona información
+    detallada sobre cualquier problema encontrado durante la carga.
+    
+    Args:
+        file_path (str): Ruta completa al archivo Excel (.xlsx, .xls)
+        
+    Returns:
+        Optional[Dict[str, pd.DataFrame]]: Diccionario donde las claves son los nombres
+        de las hojas y los valores son DataFrames correspondientes. Retorna None si
+        hay errores críticos en la carga del archivo.
+        
+    Raises:
+        FileNotFoundError: Si el archivo no existe en la ruta especificada
+        PermissionError: Si no hay permisos para leer el archivo
+        
+    Example:
+        >>> data = load_excel_file("datos_socioeconomicos.xlsx")
+        >>> if data:
+        ...     print(f"Hojas cargadas: {list(data.keys())}")
+        ...     print(f"Forma de la primera hoja: {list(data.values())[0].shape}")
+        
+    Note:
+        - El archivo debe tener al menos una hoja válida
+        - Se imprime información de progreso durante la carga
+        - Los errores se registran con traceback para debugging
+    """
     try:
         try:
             excel_data = pd.ExcelFile(file_path)
@@ -277,7 +320,48 @@ def consolidate_data_for_country(data_transformada_indicadores, country_to_analy
         return pd.DataFrame()
     
 # En data_loader_module.py (o adaptado para main.py)
-def preparar_datos_corte_transversal(all_sheets_data, selected_indicators_codes, selected_countries_names, target_year, col_paises_nombre_original='Unnamed: 0'):
+def preparar_datos_corte_transversal(
+    all_sheets_data: Dict[str, pd.DataFrame], 
+    selected_indicators_codes: List[str], 
+    selected_countries_names: List[str], 
+    target_year: Union[int, str], 
+    col_paises_nombre_original: str = 'Unnamed: 0'
+) -> pd.DataFrame:
+    """
+    Prepara un DataFrame para análisis de corte transversal para un año específico.
+    
+    Esta función extrae datos de múltiples indicadores para países seleccionados
+    en un año determinado, creando una matriz adecuada para análisis PCA.
+    
+    Args:
+        all_sheets_data (Dict[str, pd.DataFrame]): Diccionario con DataFrames por indicador
+        selected_indicators_codes (List[str]): Lista de códigos de indicadores a incluir
+        selected_countries_names (List[str]): Lista de códigos de países a incluir
+        target_year (Union[int, str]): Año objetivo para el análisis
+        col_paises_nombre_original (str, optional): Nombre de la columna que contiene
+            los códigos de países. Por defecto 'Unnamed: 0'.
+            
+    Returns:
+        pd.DataFrame: DataFrame con países como filas e indicadores como columnas,
+        conteniendo los valores para el año especificado. Las filas corresponden
+        a los países seleccionados y las columnas a los indicadores.
+        
+    Raises:
+        ValueError: Si no hay datos suficientes para el año especificado
+        KeyError: Si algún indicador no existe en los datos
+        
+    Example:
+        >>> df_cross = preparar_datos_corte_transversal(
+        ...     data, ['GDP_growth', 'Inflation'], ['USA', 'MEX'], 2020
+        ... )
+        >>> print(f"Países: {df_cross.index.tolist()}")
+        >>> print(f"Indicadores: {df_cross.columns.tolist()}")
+        
+    Note:
+        - Los valores faltantes se mantienen como NaN y deben ser manejados posteriormente
+        - El DataFrame resultante está listo para estandarización y PCA
+        - Se maneja automáticamente la detección de formato de año (int, str, float)
+    """
     """
     [CORREGIDA v2] Prepara un DataFrame para un análisis de corte transversal para un año específico.
     Maneja la configuración del índice de forma más robusta para evitar errores.

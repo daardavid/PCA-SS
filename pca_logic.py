@@ -11,7 +11,7 @@ from constants import MAPEO_INDICADORES
 
 class PCAAnalysisLogic:
     @staticmethod
-    def run_series_analysis_logic(cfg, imputation_strategy=None, imputation_params=None):
+    def run_series_analysis_logic(cfg, imputation_strategy=None, imputation_params=None, selected_years=None):
         """
         Ejecuta el flujo de análisis de serie de tiempo (sin GUI).
         Retorna un diccionario con todos los resultados intermedios y finales.
@@ -34,12 +34,30 @@ class PCAAnalysisLogic:
             selected_unit,
             selected_indicators
         )
+        # Filtrar por años si se proporciona una lista
+        if selected_years is not None and len(selected_years) > 0:
+            # Convertir a int si es necesario
+            selected_years_int = [int(y) for y in selected_years]
+            if 'Año' in df_consolidado.columns:
+                df_consolidado = df_consolidado[df_consolidado['Año'].isin(selected_years_int)]
+            elif df_consolidado.index.name == 'Año' or 'Año' in df_consolidado.index.names:
+                df_consolidado = df_consolidado.loc[df_consolidado.index.isin(selected_years_int)]
+            else:
+                # Si no hay columna ni índice de año, advertir
+                return {"error": "No se encontró columna ni índice 'Año' para filtrar por año."}
+            if df_consolidado.empty:
+                return {"error": f"No hay datos para los años seleccionados: {selected_years}"}
         if df_consolidado is None or df_consolidado.empty:
             return {"error": "No se pudieron consolidar los datos para el país seleccionado."}
 
         ncols = df_consolidado.shape[1]
         if ncols == 1:
             return {"warning": "Solo seleccionaste un indicador. El PCA no es informativo con un solo indicador."}
+
+        # Verificar datos faltantes antes de la imputación
+        datos_faltantes = df_consolidado.isnull().sum().sum()
+        if datos_faltantes > 0 and (imputation_strategy is None or imputation_strategy == 'ninguna'):
+            return {"warning": f"Se encontraron {datos_faltantes} datos faltantes en el dataset. Considera aplicar una estrategia de imputación para evitar errores en el análisis PCA."}
 
         # Imputación de datos faltantes
         df_imputado = df_consolidado.copy()
@@ -66,6 +84,9 @@ class PCAAnalysisLogic:
         if df_estandarizado.shape[1] > 1:
             pca_model, _ = pca_mod.realizar_pca(df_estandarizado, n_components=None)
             evr, cum_evr = pca_mod.obtener_varianza_explicada(pca_model)
+            # Validar que cum_evr no sea None antes de operar
+            if cum_evr is None or evr is None:
+                return {"error": "No se pudo calcular la varianza explicada (cum_evr) porque el análisis PCA falló. Verifica que los datos no tengan NaNs y que haya suficientes observaciones."}
             sugg_90 = np.where(cum_evr >= 0.90)[0]
             sugg_95 = np.where(cum_evr >= 0.95)[0]
             n_sugg_90 = sugg_90[0] + 1 if len(sugg_90) > 0 else None

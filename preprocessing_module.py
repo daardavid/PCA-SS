@@ -1,14 +1,109 @@
 # preprocessing_module.py
+"""
+Módulo de preprocesamiento de datos para análisis PCA socioeconómico.
+
+Este módulo implementa técnicas robustas de limpieza y preparación de datos:
+- Múltiples estrategias de imputación de valores faltantes
+- Estandarización de datos (z-score)
+- Validación de calidad de datos
+- Interfaz interactiva para selección de métodos
+
+Las funciones están diseñadas para manejar datos socioeconómicos que frecuentemente
+presentan valores faltantes y requieren tratamiento especializado.
+
+Estrategias de imputación disponibles:
+    - Interpolación (lineal, polinomial, spline)
+    - Estadísticas descriptivas (media, mediana, moda)
+    - Métodos avanzados (iterativo, KNN)
+    - Propagación (forward/backward fill)
+    - Valores constantes personalizados
+
+Autor: David Armando Abreu Rosique
+Fecha: 2025
+"""
 import pandas as pd
 import numpy as np
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, SimpleImputer, KNNImputer
 from sklearn.preprocessing import StandardScaler
+from typing import Tuple, Optional, Dict, Any, Union
 
-def manejar_datos_faltantes(df, estrategia='interpolacion', valor_relleno=None, 
-                            devolver_mascara=False, iteraciones_imputador=10, 
-                            estimador_imputador=None, metodo_interpolacion='linear', 
-                            orden_interpolacion=3, knn_vecinos=5, **kwargs):
+
+def manejar_datos_faltantes(
+    df: pd.DataFrame, 
+    estrategia: str = 'interpolacion', 
+    valor_relleno: Optional[Union[int, float, str]] = None,
+    devolver_mascara: bool = False, 
+    iteraciones_imputador: int = 10,
+    estimador_imputador: Optional[Any] = None, 
+    metodo_interpolacion: str = 'linear',
+    orden_interpolacion: int = 3, 
+    knn_vecinos: int = 5, 
+    **kwargs
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+    """
+    Maneja valores faltantes en un DataFrame usando múltiples estrategias de imputación.
+    
+    Esta función implementa un conjunto completo de técnicas de imputación optimizadas
+    para datos socioeconómicos longitudinales. Cada estrategia está diseñada para
+    preservar las características estadísticas y temporales de los datos originales.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con posibles valores faltantes. Puede contener
+            columnas numéricas y categóricas.
+        estrategia (str): Método de imputación a aplicar:
+            - 'interpolacion': Interpolación numérica (lineal por defecto)
+            - 'mean': Rellena con la media de cada columna
+            - 'median': Rellena con la mediana de cada columna  
+            - 'most_frequent': Rellena con el valor más frecuente (moda)
+            - 'ffill': Forward fill (propaga valores anteriores)
+            - 'bfill': Backward fill (propaga valores posteriores)
+            - 'iterative': Imputación iterativa multivariada
+            - 'knn': Imputación basada en k-vecinos más cercanos
+            - 'valor_constante': Rellena con un valor específico
+            - 'eliminar_filas': Elimina filas con cualquier NaN
+            - 'ninguna': No aplica imputación
+        valor_relleno (Optional[Union[int, float, str]]): Valor específico para 
+            estrategia 'valor_constante'.
+        devolver_mascara (bool): Si True, retorna también una máscara booleana
+            indicando qué valores fueron imputados.
+        iteraciones_imputador (int): Número máximo de iteraciones para 'iterative'.
+        estimador_imputador (Optional[Any]): Estimador base para imputación iterativa.
+        metodo_interpolacion (str): Método de interpolación ('linear', 'polynomial',
+            'spline', etc.).
+        orden_interpolacion (int): Orden para interpolación polinomial/spline.
+        knn_vecinos (int): Número de vecinos para imputación KNN.
+        **kwargs: Parámetros adicionales específicos por estrategia.
+        
+    Returns:
+        Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+            - Si devolver_mascara=False: DataFrame con valores imputados
+            - Si devolver_mascara=True: Tupla (DataFrame imputado, DataFrame máscara)
+            
+    Raises:
+        ValueError: Si la estrategia no es reconocida
+        TypeError: Si los parámetros no son del tipo esperado
+        
+    Example:
+        >>> # Imputación básica con interpolación
+        >>> df_clean = manejar_datos_faltantes(df, estrategia='interpolacion')
+        
+        >>> # Imputación KNN con máscara
+        >>> df_clean, mascara = manejar_datos_faltantes(
+        ...     df, estrategia='knn', knn_vecinos=3, devolver_mascara=True
+        ... )
+        
+        >>> # Imputación con valor constante
+        >>> df_clean = manejar_datos_faltantes(
+        ...     df, estrategia='valor_constante', valor_relleno=0
+        ... )
+        
+    Note:
+        - Solo las columnas numéricas se procesan con estrategias estadísticas
+        - La imputación preserva tipos de datos originales cuando es posible
+        - Para series temporales, se recomienda 'interpolacion' o 'ffill'/'bfill'
+        - La estrategia 'iterative' es más robusta pero computacionalmente costosa
+    """
     if df.empty:
         if devolver_mascara:
             mascara_vacia = pd.DataFrame(False, index=df.index, columns=df.columns)

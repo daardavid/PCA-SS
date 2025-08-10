@@ -19,6 +19,43 @@ import sys
 import webbrowser
 import functools
 
+# Importar sistemas mejorados
+try:
+    from logging_config import get_logger, setup_application_logging
+    from config_manager import get_config, update_config, save_config
+    from performance_optimizer import profiled
+    # Configurar logging mejorado
+    setup_application_logging(debug_mode=False)
+    ENHANCED_SYSTEMS_AVAILABLE = True
+except ImportError:
+    ENHANCED_SYSTEMS_AVAILABLE = False
+    def get_logger(name):
+        return logging.getLogger(name)
+
+# Import del gestor de dependencias
+try:
+    from dependency_manager import dep_manager, safe_import
+    DEPENDENCY_MANAGER_AVAILABLE = True
+except ImportError:
+    DEPENDENCY_MANAGER_AVAILABLE = False
+    def safe_import(package_name: str, attribute: str = None):
+        """Fallback para importación segura."""
+        try:
+            module = __import__(package_name)
+            if attribute:
+                return getattr(module, attribute)
+            return module
+        except (ImportError, AttributeError):
+            return None
+
+# Verificación de dependencias críticas al inicio
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    print("⚠️  Warning: matplotlib no disponible. Las visualizaciones no funcionarán.")
+
 
 # === i18n infrastructure ===
 
@@ -52,13 +89,19 @@ def tr(key):
 # === Configuración de rutas y logging ===
 PROJECTS_DIR = r"C:\Users\messi\OneDrive\Escritorio\escuela\Servicio Social\Python\PCA\Proyectos save"
 LOG_PATH = os.path.join(os.path.dirname(__file__), "pca_gui.log")
-logger = logging.getLogger("pca_gui")
-logger.setLevel(logging.INFO)
-if not logger.handlers:
-    handler = RotatingFileHandler(LOG_PATH, maxBytes=200_000, backupCount=3, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+
+# Usar sistema de logging mejorado si está disponible
+if ENHANCED_SYSTEMS_AVAILABLE:
+    logger = get_logger("pca_gui")
+else:
+    # Fallback al sistema de logging original
+    logger = logging.getLogger("pca_gui")
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = RotatingFileHandler(LOG_PATH, maxBytes=200_000, backupCount=3, encoding="utf-8")
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 # === Decorador para callbacks seguros ===
 def safe_gui_callback(func):
@@ -85,12 +128,19 @@ class PCAApp(tk.Tk):
     """Aplicación PCA Socioeconómicos GUI principal."""
     def __init__(self):
         super().__init__()
-        self.title("PCA Socioeconómicos - GUI")
+        self.title("🔬 PCA Socioeconómicos - Análisis Avanzado")
+        
+        # Configurar tamaño mínimo y inicial
+        self.geometry("900x700")
+        self.minsize(800, 600)
+        
+        logger.info("Iniciando aplicación PCA GUI")
         self._setup_config()
         self._setup_ui()
         self._bind_events()
 
     @safe_gui_callback
+    @profiled if ENHANCED_SYSTEMS_AVAILABLE else lambda x: x
     def start_cross_section_analysis(self):
         """Inicia el flujo de análisis de corte transversal (varias unidades, un año o varios años)."""
         try:
@@ -111,13 +161,33 @@ class PCAApp(tk.Tk):
             , multi=True)
         )
     @safe_gui_callback
+    @profiled if ENHANCED_SYSTEMS_AVAILABLE else lambda x: x
     def run_series_analysis(self):
-        """Ejecuta el análisis de serie de tiempo para la unidad y años seleccionados."""
+        """Ejecuta el análisis de serie de tiempo para la unidad y años seleccionados (pueden ser varios años)."""
         from pca_logic import PCAAnalysisLogic
         cfg = self.project_config.series_config
         estrategia, params = None, None
-        # Ejecuta la lógica real
-        results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params)
+        # Obtener los años seleccionados (pueden ser varios)
+        selected_years = []
+        if cfg.get("selected_years"):
+            selected_years = cfg["selected_years"] if isinstance(cfg["selected_years"], list) else [cfg["selected_years"]]
+        
+        # Primero ejecuta una validación para detectar datos faltantes
+        temp_results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=None, imputation_params=None, selected_years=selected_years)
+        if "warning" in temp_results and ("faltantes" in temp_results["warning"] or "datos faltantes" in temp_results["warning"]):
+            respuesta = messagebox.askyesno(
+                "Datos faltantes detectados",
+                f"Se encontraron datos faltantes en la serie de tiempo.\n¿Quieres imputar los valores faltantes?\n\nDetalle: {temp_results['warning']}"
+            )
+            if respuesta:
+                estrategia, params = self.gui_select_imputation_strategy()
+            else:
+                # Si el usuario no quiere imputar, mostrar el warning y salir
+                messagebox.showwarning("Advertencia", temp_results["warning"])
+                return
+        
+        # Ejecuta la lógica real con la estrategia de imputación seleccionada
+        results = PCAAnalysisLogic.run_series_analysis_logic(cfg, imputation_strategy=estrategia, imputation_params=params, selected_years=selected_years)
         if "warning" in results:
             messagebox.showwarning("Atención", results["warning"])
             return
@@ -165,64 +235,124 @@ class PCAApp(tk.Tk):
             pass
 
     def series_wizard(self):
-        self.step_select_file(lambda:
-            self.step_select_indicators(lambda:
-                self.step_select_units(lambda:
-                    self.run_series_analysis()
-                , allow_multiple=False)  # Solo una unidad
-            , multi=True)
-        )
+        # Limpia selección de años al iniciar el flujo
+        self.project_config.series_config["selected_years"] = []
+        self.step_select_file(lambda: self._series_select_indicators())
+
+    def _series_select_indicators(self):
+        # Limpia selección de años al cambiar indicadores
+        self.project_config.series_config["selected_years"] = []
+        self.step_select_indicators(lambda: self._series_select_units(), multi=True)
+
+    def _series_select_units(self):
+        # Limpia selección de años al cambiar unidad
+        self.project_config.series_config["selected_years"] = []
+        self.step_select_units(lambda: self._series_select_years(), allow_multiple=False)
+
+    def _series_select_years(self):
+        self.step_select_year(lambda: self.sync_gui_from_cfg(), multi=True)
     def show_settings_window(self):
-        import matplotlib.pyplot as plt
+        """Ventana de configuración moderna y mejorada."""
         win = Toplevel(self)
-        win.title("Configuración")
-        win.geometry("370x400")
+        win.title("⚙️ Configuración")
+        win.geometry("450x550")
         win.resizable(False, False)
-        # Tema
-        tk.Label(win, text="Tema:", font=("Arial", 11)).pack(pady=(18, 2))
-        theme_var = tk.StringVar(value=self.theme)
-        frm_theme = tk.Frame(win)
-        frm_theme.pack()
-        tk.Radiobutton(frm_theme, text="Claro", variable=theme_var, value="light").pack(side="left", padx=8)
-        tk.Radiobutton(frm_theme, text="Oscuro", variable=theme_var, value="dark").pack(side="left", padx=8)
+        
+        # Aplicar tema a la ventana
+        win.configure(bg=getattr(self, 'bg_primary', '#ffffff'))
+        
+        # Título principal
+        title_frame = tk.Frame(win, bg=getattr(self, 'bg_primary', '#ffffff'))
+        title_frame.pack(fill='x', pady=(20, 30))
+        
+        title_label = tk.Label(
+            title_frame,
+            text="🎨 Personalización",
+            font=("Segoe UI", 16, "bold"),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b')
+        )
+        title_label.pack()
+        
+        # Contenedor principal con scroll si es necesario
+        main_frame = tk.Frame(win, bg=getattr(self, 'bg_primary', '#ffffff'))
+        main_frame.pack(fill='both', expand=True, padx=30)
+        
+        # Sección Tema
+        self._create_settings_section(main_frame, "🌙 Tema", 0)
+        theme_var = tk.StringVar(value=getattr(self, "theme", "light"))
+        theme_frame = tk.Frame(main_frame, bg=getattr(self, 'bg_primary', '#ffffff'))
+        theme_frame.pack(fill='x', pady=(5, 20))
+        
+        light_btn = tk.Radiobutton(
+            theme_frame, text="☀️ Claro", variable=theme_var, value="light",
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            selectcolor=getattr(self, 'accent_color', '#3b82f6'),
+            font=("Segoe UI", 10)
+        )
+        light_btn.pack(side="left", padx=(20, 30))
+        
+        dark_btn = tk.Radiobutton(
+            theme_frame, text="🌙 Oscuro", variable=theme_var, value="dark",
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            selectcolor=getattr(self, 'accent_color', '#3b82f6'),
+            font=("Segoe UI", 10)
+        )
+        dark_btn.pack(side="left")
 
-        # Idioma
-        tk.Label(win, text="Idioma / Language:", font=("Arial", 11)).pack(pady=(18, 2))
+        # Sección Idioma
+        self._create_settings_section(main_frame, "🌍 Idioma / Language", 20)
         lang_var = tk.StringVar(value=getattr(self, "lang", "es"))
-        frm_lang = tk.Frame(win)
-        frm_lang.pack()
-        tk.Radiobutton(frm_lang, text="Español", variable=lang_var, value="es").pack(side="left", padx=8)
-        tk.Radiobutton(frm_lang, text="English", variable=lang_var, value="en").pack(side="left", padx=8)
+        lang_frame = tk.Frame(main_frame, bg=getattr(self, 'bg_primary', '#ffffff'))
+        lang_frame.pack(fill='x', pady=(5, 20))
+        
+        es_btn = tk.Radiobutton(
+            lang_frame, text="🇪🇸 Español", variable=lang_var, value="es",
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            selectcolor=getattr(self, 'accent_color', '#3b82f6'),
+            font=("Segoe UI", 10)
+        )
+        es_btn.pack(side="left", padx=(20, 30))
+        
+        en_btn = tk.Radiobutton(
+            lang_frame, text="🇺🇸 English", variable=lang_var, value="en",
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            selectcolor=getattr(self, 'accent_color', '#3b82f6'),
+            font=("Segoe UI", 10)
+        )
+        en_btn.pack(side="left")
 
-        # Tamaño de ventana
-        tk.Label(win, text="Tamaño de ventana (ej: 800x600):", font=("Arial", 11)).pack(pady=(18, 2))
+        # Sección Ventana
+        self._create_settings_section(main_frame, "📐 Tamaño de Ventana", 20)
         size_var = tk.StringVar(value=self.geometry())
-        entry_size = tk.Entry(win, textvariable=size_var, width=16)
-        entry_size.pack()
+        size_entry = self._create_modern_entry(main_frame, size_var, "Ej: 900x700")
+        
+        # Sección Fuente
+        self._create_settings_section(main_frame, "🔤 Tipografía", 20)
+        font_var = tk.StringVar(value=getattr(self, "custom_font", "Segoe UI"))
+        font_entry = self._create_modern_entry(main_frame, font_var, "Nombre de la fuente")
+        
+        fontsize_var = tk.StringVar(value=str(getattr(self, "custom_fontsize", 10)))
+        fontsize_entry = self._create_modern_entry(main_frame, fontsize_var, "Tamaño (8-16)", width=15)
 
-        # Fuente
-        tk.Label(win, text="Fuente principal:", font=("Arial", 11)).pack(pady=(18, 2))
-        font_var = tk.StringVar(value=getattr(self, "custom_font", "Arial"))
-        entry_font = tk.Entry(win, textvariable=font_var, width=16)
-        entry_font.pack()
-
-        # Tamaño de fuente
-        tk.Label(win, text="Tamaño de fuente:", font=("Arial", 11)).pack(pady=(18, 2))
-        fontsize_var = tk.StringVar(value=str(getattr(self, "custom_fontsize", 12)))
-        entry_fontsize = tk.Entry(win, textvariable=fontsize_var, width=6)
-        entry_fontsize.pack()
-
-        # Guardar y cerrar
+        # Botones de acción
+        buttons_frame = tk.Frame(win, bg=getattr(self, 'bg_primary', '#ffffff'))
+        buttons_frame.pack(fill='x', pady=(30, 20), padx=30)
+        
         def save_and_close():
             self.theme = theme_var.get()
-            self.custom_font = font_var.get()
+            self.custom_font = font_var.get() or "Segoe UI"
             try:
-                self.custom_fontsize = int(fontsize_var.get())
-            except Exception:
-                self.custom_fontsize = 12
+                self.custom_fontsize = max(8, min(16, int(fontsize_var.get())))
+            except:
+                self.custom_fontsize = 10
             try:
                 self.geometry(size_var.get())
-            except Exception:
+            except:
                 pass
             new_lang = lang_var.get()
             lang_changed = (getattr(self, 'lang', 'es') != new_lang)
@@ -235,8 +365,134 @@ class PCAApp(tk.Tk):
                 self.change_language(self.lang)
             self.sync_gui_from_cfg()
             win.destroy()
-        tk.Button(win, text="Guardar", command=save_and_close, bg="#b7e0ee", width=12).pack(pady=18)
-        win.grab_set(); win.focus_set()
+        
+        # Botón guardar con estilo moderno
+        save_btn = self.create_modern_button(
+            buttons_frame, 
+            text="💾 Guardar Cambios", 
+            command=save_and_close,
+            style="success",
+            width=20
+        )
+        save_btn.pack(side='right', padx=(10, 0))
+        
+        # Botón cancelar
+        cancel_btn = self.create_modern_button(
+            buttons_frame, 
+            text="❌ Cancelar", 
+            command=win.destroy,
+            style="secondary",
+            width=15
+        )
+        cancel_btn.pack(side='right')
+        
+        win.grab_set()
+        win.focus_set()
+        
+        # Centrar ventana
+        win.update_idletasks()
+        x = (win.winfo_screenwidth() // 2) - (win.winfo_width() // 2)
+        y = (win.winfo_screenheight() // 2) - (win.winfo_height() // 2)
+        win.geometry(f"+{x}+{y}")
+
+    def _create_settings_section(self, parent, title, pady_top=0):
+        """Crea una sección con título en la ventana de configuración."""
+        section_label = tk.Label(
+            parent,
+            text=title,
+            font=("Segoe UI", 12, "bold"),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'accent_color', '#3b82f6')
+        )
+        section_label.pack(anchor='w', pady=(pady_top, 5))
+        return section_label
+
+    def _create_modern_entry(self, parent, textvariable, placeholder="", width=25):
+        """Crea un Entry moderno con placeholder."""
+        entry_frame = tk.Frame(parent, bg=getattr(self, 'bg_primary', '#ffffff'))
+        entry_frame.pack(fill='x', pady=(5, 10))
+        
+        entry = tk.Entry(
+            entry_frame,
+            textvariable=textvariable,
+            font=("Segoe UI", 10),
+            bg=getattr(self, 'bg_secondary', '#f8fafc'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            relief="flat",
+            bd=1,
+            width=width,
+            insertbackground=getattr(self, 'fg_primary', '#1e293b')
+        )
+        entry.pack(padx=(20, 0), anchor='w')
+        
+        # Añadir placeholder como etiqueta si está vacío
+        if placeholder:
+            placeholder_label = tk.Label(
+                entry_frame,
+                text=f"💡 {placeholder}",
+                font=("Segoe UI", 8),
+                fg=getattr(self, 'fg_secondary', '#64748b'),
+                bg=getattr(self, 'bg_primary', '#ffffff')
+            )
+            placeholder_label.pack(padx=(25, 0), anchor='w')
+        
+    def create_modern_window(self, title, width=400, height=500, resizable=True):
+        """Crea una ventana moderna con el tema aplicado."""
+        win = Toplevel(self)
+        win.title(title)
+        win.geometry(f"{width}x{height}")
+        win.resizable(resizable, resizable)
+        
+        # Usar colores seguros por defecto
+        bg_color = getattr(self, 'bg_primary', '#ffffff')
+        win.configure(bg=bg_color)
+        
+        # Centrar ventana
+        win.update_idletasks()
+        x = (win.winfo_screenwidth() // 2) - (width // 2)
+        y = (win.winfo_screenheight() // 2) - (height // 2)
+        win.geometry(f"{width}x{height}+{x}+{y}")
+        
+        return win
+
+    def create_modern_listbox(self, parent, selectmode=tk.MULTIPLE, height=15):
+        """Crea un Listbox moderno con scrollbar."""
+        # Frame contenedor
+        listbox_frame = tk.Frame(parent, bg=getattr(self, 'bg_primary', '#ffffff'))
+        
+        # Listbox con estilo moderno
+        listbox = tk.Listbox(
+            listbox_frame,
+            selectmode=selectmode,
+            font=("Segoe UI", 10),
+            bg=getattr(self, 'bg_secondary', '#f8fafc'),
+            fg=getattr(self, 'fg_primary', '#1e293b'),
+            selectbackground=getattr(self, 'accent_color', '#3b82f6'),
+            selectforeground='white',
+            relief="flat",
+            bd=1,
+            height=height,
+            activestyle='none'
+        )
+        
+        # Scrollbar moderna
+        scrollbar = tk.Scrollbar(
+            listbox_frame,
+            orient="vertical",
+            command=listbox.yview,
+            bg=getattr(self, 'bg_secondary', '#f8fafc'),
+            troughcolor=getattr(self, 'bg_primary', '#ffffff'),
+            relief="flat",
+            bd=0
+        )
+        
+        listbox.configure(yscrollcommand=scrollbar.set)
+        
+        # Empaquetar
+        listbox.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        return listbox_frame, listbox
 
     def apply_matplotlib_style(self):
         import matplotlib.pyplot as plt
@@ -246,44 +502,171 @@ class PCAApp(tk.Tk):
             plt.style.use('default')
 
     def apply_theme(self):
-        # Aplica tema claro/oscuro a la ventana principal y widgets básicos
-        bg_light = "#f5f5f5"; fg_light = "#222"; btn_light = "#e0e0e0"
-        bg_dark = "#23272e"; fg_dark = "#f5f5f5"; btn_dark = "#444"
+        """Aplica tema visual moderno con colores mejorados y efectos."""
+        # Colores modernos mejorados
         if getattr(self, "theme", "light") == "dark":
-            bg, fg, btn = bg_dark, fg_dark, btn_dark
+            # Tema oscuro moderno
+            self.bg_primary = "#1e1e2e"
+            self.bg_secondary = "#313244" 
+            self.fg_primary = "#cdd6f4"
+            self.fg_secondary = "#a6adc8"
+            self.accent_color = "#89b4fa"
+            self.success_color = "#a6e3a1"
+            self.warning_color = "#f9e2af"
+            self.error_color = "#f38ba8"
+            self.btn_primary = "#89b4fa"
+            self.btn_secondary = "#585b70"
+            self.btn_success = "#a6e3a1"
+            self.btn_hover = "#74c7ec"
         else:
-            bg, fg, btn = bg_light, fg_light, btn_light
-        self.configure(bg=bg)
-        for widget in self.winfo_children():
-            if isinstance(widget, tk.Label) or isinstance(widget, tk.Button):
-                widget.configure(bg=bg, fg=fg)
-            elif isinstance(widget, tk.Frame):
-                widget.configure(bg=bg)
-        # Menú
-        self.menu_bar.configure(bg=bg, fg=fg)
+            # Tema claro moderno
+            self.bg_primary = "#ffffff"
+            self.bg_secondary = "#f8fafc"
+            self.fg_primary = "#1e293b"
+            self.fg_secondary = "#475569"
+            self.accent_color = "#3b82f6"
+            self.success_color = "#10b981"
+            self.warning_color = "#f59e0b"
+            self.error_color = "#ef4444"
+            self.btn_primary = "#3b82f6"
+            self.btn_secondary = "#64748b"
+            self.btn_success = "#10b981"
+            self.btn_hover = "#2563eb"
+        
+        # Aplicar colores base
+        self.configure(bg=self.bg_primary)
+        
+        # Actualizar widgets recursivamente
+        self._update_widget_theme(self)
+        
+        # Menú con colores modernos
+        if hasattr(self, 'menu_bar'):
+            self.menu_bar.configure(
+                bg=self.bg_secondary, 
+                fg=self.fg_primary,
+                activebackground=self.accent_color,
+                activeforeground=self.bg_primary
+            )
+
+    def _update_widget_theme(self, parent):
+        """Actualiza recursivamente el tema de todos los widgets."""
+        for widget in parent.winfo_children():
+            widget_class = widget.winfo_class()
+            
+            if widget_class == "Label":
+                widget.configure(bg=self.bg_primary, fg=self.fg_primary)
+            elif widget_class == "Frame":
+                widget.configure(bg=self.bg_primary)
+                self._update_widget_theme(widget)  # Recursivo para frames
+            elif widget_class == "Button":
+                # No aplicar tema automático a botones, se manejan individualmente
+                pass
+            elif widget_class == "Entry":
+                widget.configure(
+                    bg=self.bg_secondary, 
+                    fg=self.fg_primary,
+                    insertbackground=self.fg_primary,
+                    relief="flat",
+                    bd=1
+                )
+            elif widget_class == "Listbox":
+                widget.configure(
+                    bg=self.bg_secondary,
+                    fg=self.fg_primary,
+                    selectbackground=self.accent_color,
+                    relief="flat",
+                    bd=1
+                )
 
     def apply_font_settings(self):
-        # Aplica fuente y tamaño a los widgets principales
-        font = getattr(self, "custom_font", "Arial")
-        fontsize = getattr(self, "custom_fontsize", 12)
+        """Aplica configuración de fuente moderna."""
+        font = getattr(self, "custom_font", "Segoe UI")
+        fontsize = getattr(self, "custom_fontsize", 10)
+        
+        # Fuentes diferenciadas para jerarquía visual
+        self.font_title = (font, fontsize + 4, "bold")
+        self.font_button = (font, fontsize, "normal")
+        self.font_label = (font, fontsize, "normal")
+        self.font_small = (font, fontsize - 1, "normal")
+        
+        # Aplicar a widgets principales
         for widget in self.winfo_children():
-            if isinstance(widget, tk.Label) or isinstance(widget, tk.Button):
-                widget.configure(font=(font, fontsize))
+            if isinstance(widget, tk.Label):
+                if hasattr(widget, '_is_title'):
+                    widget.configure(font=self.font_title)
+                else:
+                    widget.configure(font=self.font_label)
+
+    def create_modern_button(self, parent, text, command=None, style="primary", width=None, height=2):
+        """Crea un botón moderno con efectos hover y colores mejorados."""
+        # Asegurar que las fuentes estén definidas
+        if not hasattr(self, 'font_button'):
+            font = getattr(self, "custom_font", "Segoe UI")
+            fontsize = getattr(self, "custom_fontsize", 10)
+            self.font_button = (font, fontsize, "normal")
+        
+        # Configurar colores según el estilo
+        if style == "primary":
+            bg_normal = getattr(self, 'btn_primary', '#3b82f6')
+            bg_hover = getattr(self, 'btn_hover', '#2563eb')
+            fg_color = '#ffffff'
+        elif style == "success":
+            bg_normal = getattr(self, 'btn_success', '#10b981')
+            bg_hover = '#059669'
+            fg_color = '#ffffff'
+        elif style == "secondary":
+            bg_normal = getattr(self, 'btn_secondary', '#64748b')
+            bg_hover = '#475569'
+            fg_color = '#ffffff'
+        else:
+            bg_normal = getattr(self, 'btn_primary', '#3b82f6')
+            bg_hover = getattr(self, 'btn_hover', '#2563eb')
+            fg_color = '#ffffff'
+        
+        # Crear botón con configuración moderna
+        btn = tk.Button(
+            parent,
+            text=text,
+            command=command,
+            bg=bg_normal,
+            fg=fg_color,
+            font=self.font_button,
+            relief="flat",
+            bd=0,
+            padx=20,
+            pady=8,
+            cursor="hand2",
+            width=width,
+            height=height
+        )
+        
+        # Añadir efectos hover
+        btn.bind("<Enter>", lambda e: btn.configure(bg=bg_hover))
+        btn.bind("<Leave>", lambda e: btn.configure(bg=bg_normal))
+        
+        return btn
 
     def load_settings(self):
         try:
             with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
-            return {"last_dir": "", "theme": "light"}
+            return {
+                "last_dir": "", 
+                "theme": "light",
+                "window_size": "900x700",
+                "custom_font": "Segoe UI",
+                "custom_fontsize": 10,
+                "lang": "es"
+            }
 
     def save_settings(self):
         settings = {
             "last_dir": getattr(self, "last_dir", ""),
             "theme": getattr(self, "theme", "light"),
             "window_size": self.geometry(),
-            "custom_font": getattr(self, "custom_font", "Arial"),
-            "custom_fontsize": getattr(self, "custom_fontsize", 12),
+            "custom_font": getattr(self, "custom_font", "Segoe UI"),
+            "custom_fontsize": getattr(self, "custom_fontsize", 10),
             "lang": getattr(self, "lang", "es")
         }
         try:
@@ -310,6 +693,11 @@ class PCAApp(tk.Tk):
         """Carga la configuración inicial y crea directorios necesarios."""
         settings = self.load_settings()
         self.apply_settings(settings)
+        
+        # Inicializar colores de tema y fuentes antes de crear UI
+        self.apply_theme()
+        self.apply_font_settings()
+        
         self.project_config = ProjectConfig()
         if not os.path.exists(PROJECTS_DIR):
             os.makedirs(PROJECTS_DIR)
@@ -389,38 +777,154 @@ class PCAApp(tk.Tk):
         # ...otros atributos de menú y widget según sea necesario...
 
         # =============================
-        # Menú principal (textos serán reemplazados por tr() en el siguiente paso)
-        self.lbl_analysis_type = tk.Label(self, text=tr("select_analysis_type"), font=("Arial", 15))
-        self.lbl_analysis_type.pack(pady=20)
+        # Interfaz principal moderna
+        
+        # Título principal con estilo moderno
+        title_frame = tk.Frame(self, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        title_frame.pack(pady=(30, 20), fill='x')
+        
+        self.lbl_analysis_type = tk.Label(
+            title_frame, 
+            text="🔬 " + tr("select_analysis_type"), 
+            font=("Segoe UI", 18, "bold"),
+            bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff',
+            fg=self.fg_primary if hasattr(self, 'fg_primary') else '#1e293b'
+        )
+        self.lbl_analysis_type._is_title = True
+        self.lbl_analysis_type.pack()
+        
+        # Contenedor principal con mejor organización
+        main_container = tk.Frame(self, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        main_container.pack(pady=20, padx=40, fill='both', expand=True)
+        
         # --- Serie de Tiempo ---
-        frm_series = tk.Frame(self)
-        frm_series.pack(pady=4)
-        self.btn_series = tk.Button(frm_series, text=tr("series_analysis"), width=28, height=2, command=self.start_series_analysis)
-        self.btn_series.pack(side="left", padx=2)
-        self.btn_run_series = tk.Button(frm_series, text="Ejecutar", width=10, height=2, state=tk.DISABLED, command=self.run_series_analysis)
-        self.btn_run_series.pack(side="left", padx=2)
+        series_frame = tk.Frame(main_container, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        series_frame.pack(pady=10, fill='x')
+        
+        series_label = tk.Label(
+            series_frame, 
+            text="📈 Serie de Tiempo", 
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff',
+            fg=self.fg_primary if hasattr(self, 'fg_primary') else '#1e293b'
+        )
+        series_label.pack(anchor='w', pady=(0, 5))
+        
+        frm_series = tk.Frame(series_frame, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        frm_series.pack(fill='x')
+        
+        self.btn_series = self.create_modern_button(
+            frm_series, 
+            text=tr("series_analysis"), 
+            command=self.start_series_analysis,
+            style="primary",
+            width=35
+        )
+        self.btn_series.pack(side="left", padx=(0, 10))
+        
+        self.btn_run_series = self.create_modern_button(
+            frm_series, 
+            text="▶ Ejecutar", 
+            command=self.run_series_analysis,
+            style="success",
+            width=12
+        )
+        self.btn_run_series.pack(side="left")
+        self.btn_run_series.config(state=tk.DISABLED)
+        
         # --- Corte Transversal ---
-        frm_cross = tk.Frame(self)
-        frm_cross.pack(pady=4)
-        self.btn_cross = tk.Button(frm_cross, text=tr("cross_section_analysis"), width=28, height=2, command=self.start_cross_section_analysis)
-        self.btn_cross.pack(side="left", padx=2)
-        self.btn_run_cross = tk.Button(frm_cross, text="Ejecutar", width=10, height=2, state=tk.DISABLED, command=self.run_cross_section_analysis)
-        self.btn_run_cross.pack(side="left", padx=2)
+        cross_frame = tk.Frame(main_container, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        cross_frame.pack(pady=10, fill='x')
+        
+        cross_label = tk.Label(
+            cross_frame, 
+            text="📊 Corte Transversal", 
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff',
+            fg=self.fg_primary if hasattr(self, 'fg_primary') else '#1e293b'
+        )
+        cross_label.pack(anchor='w', pady=(0, 5))
+        
+        frm_cross = tk.Frame(cross_frame, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        frm_cross.pack(fill='x')
+        
+        self.btn_cross = self.create_modern_button(
+            frm_cross, 
+            text=tr("cross_section_analysis"), 
+            command=self.start_cross_section_analysis,
+            style="primary",
+            width=35
+        )
+        self.btn_cross.pack(side="left", padx=(0, 10))
+        
+        self.btn_run_cross = self.create_modern_button(
+            frm_cross, 
+            text="▶ Ejecutar", 
+            command=self.run_cross_section_analysis,
+            style="success",
+            width=12
+        )
+        self.btn_run_cross.pack(side="left")
+        self.btn_run_cross.config(state=tk.DISABLED)
+        
         # --- Panel 3D ---
-        frm_panel = tk.Frame(self)
-        frm_panel.pack(pady=4)
-        self.btn_panel = tk.Button(frm_panel, text=tr("panel_analysis"), width=28, height=2, command=self.start_panel_analysis)
-        self.btn_panel.pack(side="left", padx=2)
-        self.btn_run_panel = tk.Button(frm_panel, text="Ejecutar", width=10, height=2, state=tk.DISABLED, command=self.run_panel_analysis)
-        self.btn_run_panel.pack(side="left", padx=2)
-        self.status = tk.Label(self, text=tr("status_waiting"), fg="blue")
-        self.status.pack(pady=10)
+        panel_frame = tk.Frame(main_container, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        panel_frame.pack(pady=10, fill='x')
+        
+        panel_label = tk.Label(
+            panel_frame, 
+            text="🎯 PCA 3D", 
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff',
+            fg=self.fg_primary if hasattr(self, 'fg_primary') else '#1e293b'
+        )
+        panel_label.pack(anchor='w', pady=(0, 5))
+        
+        frm_panel = tk.Frame(panel_frame, bg=self.bg_primary if hasattr(self, 'bg_primary') else '#ffffff')
+        frm_panel.pack(fill='x')
+        
+        self.btn_panel = self.create_modern_button(
+            frm_panel, 
+            text=tr("panel_analysis"), 
+            command=self.start_panel_analysis,
+            style="primary",
+            width=35
+        )
+        self.btn_panel.pack(side="left", padx=(0, 10))
+        
+        self.btn_run_panel = self.create_modern_button(
+            frm_panel, 
+            text="▶ Ejecutar", 
+            command=self.run_panel_analysis,
+            style="success",
+            width=12
+        )
+        self.btn_run_panel.pack(side="left")
+        self.btn_run_panel.config(state=tk.DISABLED)
+        
+        # Barra de estado moderna
+        status_frame = tk.Frame(self, bg=self.bg_secondary if hasattr(self, 'bg_secondary') else '#f8fafc', height=60)
+        status_frame.pack(side='bottom', fill='x', pady=(20, 0))
+        status_frame.pack_propagate(False)
+        
+        self.status = tk.Label(
+            status_frame, 
+            text="⏳ " + tr("status_waiting"), 
+            fg=self.accent_color if hasattr(self, 'accent_color') else '#3b82f6',
+            bg=self.bg_secondary if hasattr(self, 'bg_secondary') else '#f8fafc',
+            font=("Segoe UI", 10, "italic")
+        )
+        self.status.pack(pady=15)
 
-        self.lbl_project = tk.Label(self, text=f"{tr('project')}: Ninguno", fg="gray")
-        self.lbl_project.pack(pady=2)
+        self.lbl_project = tk.Label(
+            status_frame, 
+            text=f"📁 {tr('project')}: Ninguno", 
+            fg=self.fg_secondary if hasattr(self, 'fg_secondary') else '#475569',
+            bg=self.bg_secondary if hasattr(self, 'bg_secondary') else '#f8fafc',
+            font=("Segoe UI", 9)
+        )
+        self.lbl_project.pack()
 
-        self.apply_theme()
-        self.apply_font_settings()
         self.apply_matplotlib_style()
         self.change_language(self.lang)
 
@@ -921,6 +1425,9 @@ class PCAApp(tk.Tk):
         config_name = getattr(self, '_last_analysis_type', 'series_config')
         getattr(self.project_config, config_name)["data_file"] = file
         self.last_dir = os.path.dirname(file)
+        # Limpia selección de años al cambiar archivo en serie de tiempo
+        if config_name == "series_config":
+            getattr(self.project_config, config_name)["selected_years"] = []
         import data_loader_module as dl
         try:
             all_sheets_data = dl.load_excel_file(file)
@@ -940,73 +1447,126 @@ class PCAApp(tk.Tk):
             self.sync_gui_from_cfg()  # ← nuevo
 
     def step_select_indicators(self, callback, multi=True):
-        """Abre una ventana para seleccionar uno o varios indicadores/hojas del Excel."""
-        import tkinter as tk
-        from tkinter import messagebox, Toplevel
-
+        """Ventana moderna para seleccionar indicadores/hojas del Excel."""
         if not self.sheet_names:
             messagebox.showerror(tr("error"), tr("select_file_first") if "select_file_first" in _TRANSLATIONS else "Primero selecciona un archivo.")
             return
 
-        win = Toplevel(self)
-        win.title(tr("select_indicators"))
-        win.geometry("420x480")
-
-        # Instrucción clara
-        n_disp = len(self.sheet_names)
-        label_text = tr("select_indicators_label") if "select_indicators_label" in _TRANSLATIONS else f"Selecciona {'uno o más' if multi else 'un'} indicador{'es' if multi else ''} para el análisis ({n_disp} disponibles):"
-        lbl = tk.Label(win, text=label_text, wraplength=400)
-        lbl.pack(pady=10)
-
-        # Configura el Listbox según el modo múltiple o único
-        listbox = tk.Listbox(
-            win,
-            selectmode=tk.MULTIPLE if multi else tk.SINGLE,
-            width=50,
-            height=min(20, n_disp)
+        # Crear ventana moderna
+        win = self.create_modern_window("📊 " + tr("select_indicators"), 500, 600)
+        
+        # Título y descripción
+        title_frame = tk.Frame(win, bg=getattr(self, 'bg_primary', '#ffffff'))
+        title_frame.pack(fill='x', pady=(20, 10), padx=20)
+        
+        title_label = tk.Label(
+            title_frame,
+            text="📊 Seleccionar Indicadores",
+            font=("Segoe UI", 16, "bold"),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b')
         )
+        title_label.pack()
+        
+        # Descripción
+        n_disp = len(self.sheet_names)
+        desc_text = f"Selecciona {'uno o más' if multi else 'un'} indicador{'es' if multi else ''} para el análisis\n({n_disp} disponibles)"
+        
+        desc_label = tk.Label(
+            title_frame,
+            text=desc_text,
+            font=("Segoe UI", 10),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_secondary', '#64748b'),
+            wraplength=450
+        )
+        desc_label.pack(pady=(5, 0))
+
+        # Contenedor del listbox
+        content_frame = tk.Frame(win, bg=getattr(self, 'bg_primary', '#ffffff'))
+        content_frame.pack(fill='both', expand=True, padx=20, pady=(0, 20))
+        
+        # Listbox moderno
+        listbox_frame, listbox = self.create_modern_listbox(
+            content_frame, 
+            selectmode=tk.MULTIPLE if multi else tk.SINGLE,
+            height=18
+        )
+        listbox_frame.pack(fill='both', expand=True, pady=(0, 20))
+        
+        # Llenar listbox con indicadores
         for ind in self.sheet_names:
-            listbox.insert(tk.END, ind)
-        listbox.pack(pady=5)
+            listbox.insert(tk.END, f"📈 {ind}")
 
-        # Botones para seleccionar/desmarcar todo (solo para múltiple)
-        button_frame = tk.Frame(win)
-        button_frame.pack(pady=10)
+        # Frame de botones
+        buttons_frame = tk.Frame(content_frame, bg=getattr(self, 'bg_primary', '#ffffff'))
+        buttons_frame.pack(fill='x')
 
+        # Botones de selección (solo para múltiple)
         if multi:
-            btn_selall = tk.Button(
-                button_frame, text=tr("select_all"), command=lambda: listbox.select_set(0, tk.END),
-                bg="lightgreen", fg="black", width=15
+            selection_frame = tk.Frame(buttons_frame, bg=getattr(self, 'bg_primary', '#ffffff'))
+            selection_frame.pack(fill='x', pady=(0, 15))
+            
+            select_all_btn = self.create_modern_button(
+                selection_frame,
+                text="✅ Seleccionar Todo",
+                command=lambda: listbox.select_set(0, tk.END),
+                style="secondary",
+                width=20
             )
-            btn_selall.grid(row=0, column=0, padx=5)
+            select_all_btn.pack(side="left", padx=(0, 10))
 
-            btn_unselall = tk.Button(
-                button_frame, text=tr("unselect_all"), command=lambda: listbox.select_clear(0, tk.END),
-                bg="lightcoral", fg="black", width=15
+            unselect_all_btn = self.create_modern_button(
+                selection_frame,
+                text="❌ Deseleccionar Todo",
+                command=lambda: listbox.select_clear(0, tk.END),
+                style="secondary",
+                width=20
             )
-            btn_unselall.grid(row=0, column=1, padx=5)
+            unselect_all_btn.pack(side="left")
 
-        # Botón OK
+        # Botones de acción
+        action_frame = tk.Frame(buttons_frame, bg=getattr(self, 'bg_primary', '#ffffff'))
+        action_frame.pack(fill='x')
+
         def confirm_selection():
             selected_indices = listbox.curselection()
             if not selected_indices:
                 messagebox.showerror(tr("error"), tr("select_at_least_one_indicator"))
                 return
+                
             config_name = getattr(self, '_last_analysis_type', 'series_config')
             getattr(self.project_config, config_name)["selected_indicators"] = [self.sheet_names[i] for i in selected_indices]
+            
+            # Limpia selección de años al cambiar indicadores en serie de tiempo
+            if config_name == "series_config":
+                getattr(self.project_config, config_name)["selected_years"] = []
+                
             win.destroy()
             callback()
-            self.sync_gui_from_cfg()  # ← nuevo
+            self.sync_gui_from_cfg()
 
-        btn_ok = tk.Button(
-            button_frame, text=tr("ok"), command=confirm_selection, bg="lightblue", fg="black", width=15
+        # Botón confirmar
+        confirm_btn = self.create_modern_button(
+            action_frame,
+            text="✅ Confirmar Selección",
+            command=confirm_selection,
+            style="success",
+            width=20
         )
-        if multi:
-            btn_ok.grid(row=0, column=2, padx=5)
-        else:
-            btn_ok.grid(row=0, column=0, padx=5)
+        confirm_btn.pack(side="right", padx=(10, 0))
 
-        # Permite cerrar con ESC
+        # Botón cancelar
+        cancel_btn = self.create_modern_button(
+            action_frame,
+            text="❌ Cancelar",
+            command=win.destroy,
+            style="secondary",
+            width=15
+        )
+        cancel_btn.pack(side="right")
+
+        # Eventos
         win.bind("<Escape>", lambda event: win.destroy())
         win.grab_set()
         win.focus_set()
@@ -1054,9 +1614,14 @@ class PCAApp(tk.Tk):
         def confirm_selection():
             selected_indices = listbox.curselection()
             if not selected_indices:
-                messagebox.showerror(tr("error"), tr("select_at_least_one_unit"))
+                messagebox.showerror(tr("error"), tr("select_at_least_one_unit") if "select_at_least_one_unit" in _TRANSLATIONS else "Selecciona al menos una unidad.")
                 return
-            cfg["selected_units"] = [all_units[i] for i in selected_indices]
+            config_name = getattr(self, '_last_analysis_type', 'series_config')
+            selected_units = [all_units[i] for i in selected_indices]
+            getattr(self.project_config, config_name)["selected_units"] = selected_units
+            # Limpia selección de años al cambiar unidad en serie de tiempo
+            if config_name == "series_config":
+                getattr(self.project_config, config_name)["selected_years"] = []
             win.destroy()
             callback()
             self.sync_gui_from_cfg()  # ← nuevo
@@ -1099,11 +1664,13 @@ class PCAApp(tk.Tk):
         def confirm():
             idxs = listbox.curselection()
             if not idxs:
-                messagebox.showerror(tr("error"), tr("select_at_least_one_year"))
+                messagebox.showerror(tr("error"), tr("select_at_least_one_year") if "select_at_least_one_year" in _TRANSLATIONS else "Selecciona al menos un año.")
                 return
-            cfg["selected_years"] = [year_columns[i] for i in idxs]
+            config_name = getattr(self, '_last_analysis_type', 'series_config')
+            selected_years = [year_columns[i] for i in idxs]
+            getattr(self.project_config, config_name)["selected_years"] = selected_years
             win.destroy()
-            self.status.config(text=f"{tr('select_years')}: {cfg['selected_years']}")
+            self.status.config(text=f"{tr('select_years') if 'select_years' in _TRANSLATIONS else 'Años seleccionados'}: {selected_years}")
             if callback:
                 callback()
             self.sync_gui_from_cfg()
@@ -1391,6 +1958,81 @@ class PCAApp(tk.Tk):
             cfg["custom_titles"]["footer"] = new_note.strip()
             self.status.config(text=tr("footer_updated") if "footer_updated" in _TRANSLATIONS else "Fuente/leyenda actualizada.")
             self.sync_gui_from_cfg()
+
+    def show_loading(self, text="Procesando..."):
+        """Muestra un indicador de carga moderno."""
+        if hasattr(self, '_loading_window'):
+            return  # Ya hay una ventana de carga
+            
+        self._loading_window = Toplevel(self)
+        self._loading_window.title("Procesando")
+        self._loading_window.geometry("300x150")
+        self._loading_window.resizable(False, False)
+        self._loading_window.configure(bg=getattr(self, 'bg_primary', '#ffffff'))
+        
+        # Centrar ventana
+        self._loading_window.update_idletasks()
+        x = (self._loading_window.winfo_screenwidth() // 2) - 150
+        y = (self._loading_window.winfo_screenheight() // 2) - 75
+        self._loading_window.geometry(f"300x150+{x}+{y}")
+        
+        # Contenido
+        content_frame = tk.Frame(self._loading_window, bg=getattr(self, 'bg_primary', '#ffffff'))
+        content_frame.pack(fill='both', expand=True, padx=30, pady=30)
+        
+        # Ícono de carga animado (simplificado)
+        loading_label = tk.Label(
+            content_frame,
+            text="⏳",
+            font=("Segoe UI", 24),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'accent_color', '#3b82f6')
+        )
+        loading_label.pack()
+        
+        # Texto
+        text_label = tk.Label(
+            content_frame,
+            text=text,
+            font=("Segoe UI", 11),
+            bg=getattr(self, 'bg_primary', '#ffffff'),
+            fg=getattr(self, 'fg_primary', '#1e293b')
+        )
+        text_label.pack(pady=(10, 0))
+        
+        self._loading_window.transient(self)
+        self._loading_window.grab_set()
+        self._loading_window.update()
+
+    def hide_loading(self):
+        """Oculta el indicador de carga."""
+        if hasattr(self, '_loading_window'):
+            self._loading_window.destroy()
+            delattr(self, '_loading_window')
+
+    def update_status(self, message, type="info"):
+        """Actualiza la barra de estado con colores según el tipo."""
+        icons = {
+            "info": "ℹ️",
+            "success": "✅", 
+            "warning": "⚠️",
+            "error": "❌",
+            "loading": "⏳"
+        }
+        
+        colors = {
+            "info": getattr(self, 'accent_color', '#3b82f6'),
+            "success": getattr(self, 'success_color', '#10b981'),
+            "warning": getattr(self, 'warning_color', '#f59e0b'),
+            "error": getattr(self, 'error_color', '#ef4444'),
+            "loading": getattr(self, 'accent_color', '#3b82f6')
+        }
+        
+        icon = icons.get(type, "ℹ️")
+        color = colors.get(type, getattr(self, 'fg_primary', '#1e293b'))
+        
+        if hasattr(self, 'status'):
+            self.status.config(text=f"{icon} {message}", fg=color)
 
 # ------------- FIN CLASE --------------
 
